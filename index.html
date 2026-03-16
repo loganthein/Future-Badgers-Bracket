@@ -1217,6 +1217,47 @@ body {
 }
 
 /* ── Leaderboard bracket view ── */
+.lb-bracket-controls {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .75rem 1rem .5rem;
+  flex-wrap: wrap;
+}
+.lb-bracket-select {
+  font-family: 'Nunito', sans-serif;
+  font-size: .9rem;
+  font-weight: 700;
+  padding: .4rem .7rem;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  background: var(--white);
+  color: var(--text);
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+}
+.lb-bracket-select:focus { outline: none; border-color: var(--red); }
+.lb-bracket-score {
+  font-size: .82rem;
+  font-weight: 800;
+  color: var(--muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.lb-bracket-legend {
+  display: flex;
+  gap: .4rem;
+  flex-wrap: wrap;
+  padding: 0 1rem .6rem;
+}
+.lbl-chip {
+  font-size: .7rem;
+  font-weight: 800;
+  padding: .15rem .45rem;
+  border-radius: 4px;
+  border: 1.5px solid var(--border);
+}
 .lb-matchup {
   cursor: pointer;
   border-radius: 6px;
@@ -1238,9 +1279,16 @@ body {
   line-height: 1.2;
   pointer-events: none;
 }
-.lb-slot.win  { background: #d4edda; border-color: #28a745; color: #155724; }
-.lb-slot.lose { background: var(--offwhite); color: var(--muted); text-decoration: line-through; opacity: .55; }
-.lb-slot.empty { background: var(--gray); color: var(--muted); font-style: italic; font-weight: 600; }
+.lb-slot.win        { background: #d4edda; border-color: #28a745; color: #155724; }
+.lb-slot.lose       { background: var(--offwhite); color: var(--muted); text-decoration: line-through; opacity: .55; }
+.lb-slot.empty      { background: var(--gray); color: var(--muted); font-style: italic; font-weight: 600; }
+.lb-slot.lbs-correct { background: #d4edda; border-color: #28a745; color: #155724; font-weight: 800; }
+.lb-slot.lbs-wrong  { background: #f8d7da; border-color: #dc3545; color: #721c24; text-decoration: line-through; opacity: .8; }
+.lb-slot.lbs-pending { background: rgba(197,5,12,.08); border-color: var(--red); color: var(--red); font-weight: 800; }
+.lbl-chip.lbs-correct { background: #d4edda; border-color: #28a745; color: #155724; }
+.lbl-chip.lbs-wrong  { background: #f8d7da; border-color: #dc3545; color: #721c24; }
+.lbl-chip.lbs-pending { background: rgba(197,5,12,.08); border-color: var(--red); color: var(--red); }
+.lbl-chip.win        { background: #d4edda; border-color: #28a745; color: #155724; opacity: .6; }
 .lb-bracket-hint {
   text-align: center;
   font-size: .78rem;
