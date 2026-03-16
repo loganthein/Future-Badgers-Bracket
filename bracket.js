@@ -401,8 +401,8 @@ async function lockBracket() {
     }
 
     await submitPicks(currentNickname, userPicks, currentUserType, tbVal);
-    showPage('page-leaderboard');
-    initLeaderboard();
+    showPage('page-success');
+    initSuccessPage(tbVal);
   } catch (e) {
     alert('Oops! Could not save your bracket: ' + e.message);
     btn.disabled = false;
