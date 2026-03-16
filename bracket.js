@@ -88,8 +88,10 @@ function getGameTeams(round, regionIdx, gameInRegion) {
   }
 
   if (round === 4) {
-    const r1 = gameInRegion * 2;
-    const r2 = gameInRegion * 2 + 1;
+    // FF game 0 (left side): East(0) vs South(2)
+    // FF game 1 (right side): West(1) vs Midwest(3)
+    const ffFeeds = [[0, 2], [1, 3]];
+    const [r1, r2] = ffFeeds[gameInRegion];
     return [
       userPicks[getGameIndex(3, r1, 0)] || null,
       userPicks[getGameIndex(3, r2, 0)] || null,
@@ -113,7 +115,7 @@ function getGameTeams(round, regionIdx, gameInRegion) {
 // gameId key:
 //   Rounds 1-4 → RegionLetter (E/W/S/M) + 1-based game number
 //                e.g. "E1"=East game 1, "W3"=West game 3
-//   Round 5    → "FF1" (East/West), "FF2" (South/Midwest)
+//   Round 5    → "FF1" (East/South, left side), "FF2" (West/Midwest, right side)
 //   Round 6    → "CHAMP"
 //
 // Also supports a flat array: "results": ["TeamA", null, ...]
@@ -182,7 +184,8 @@ function getNextGame(gameIdx) {
   const regionIdx = Math.floor(offset / GAMES_PER_REGION[round]);
   const gameInReg = offset % GAMES_PER_REGION[round];
 
-  if (round === 3) return 60 + Math.floor(regionIdx / 2);
+  // East(0)→FF0, West(1)→FF1, South(2)→FF0, Midwest(3)→FF1
+  if (round === 3) return 60 + (regionIdx % 2);
   return getGameIndex(round + 1, regionIdx, Math.floor(gameInReg / 2));
 }
 
@@ -232,8 +235,15 @@ function _matchupHTML(round, regionIdx, gameInRegion, results) {
 }
 
 function _roundColHTML(round, regionIdx, numGames, results) {
+  // Group every two consecutive matchups into a .game-pair so connector
+  // lines (drawn via CSS ::before/::after) can span between them.
   let inner = '';
-  for (let g = 0; g < numGames; g++) inner += _matchupHTML(round, regionIdx, g, results);
+  for (let g = 0; g < numGames; g += 2) {
+    inner += '<div class="game-pair">';
+    inner += _matchupHTML(round, regionIdx, g, results);
+    if (g + 1 < numGames) inner += _matchupHTML(round, regionIdx, g + 1, results);
+    inner += '</div>';
+  }
   return `<div class="round-col" data-round="${round}">${inner}</div>`;
 }
 
@@ -254,10 +264,12 @@ function renderBracket() {
 
   const results = buildResultsArray();
 
+  // NCAA layout: East(0)+South(2) on left, West(1)+Midwest(3) on right.
+  // FF game 0 = East vs South (left FF), FF game 1 = West vs Midwest (right FF).
   container.innerHTML = `<div class="bracket-inner">
     <div class="bracket-half">
       ${_regionHTML(0, false, results)}
-      ${_regionHTML(1, false, results)}
+      ${_regionHTML(2, false, results)}
     </div>
     <div class="bracket-center">
       <div class="center-label">Final Four</div>
@@ -269,7 +281,7 @@ function renderBracket() {
       <div class="ff-row"><div class="ff-slot">${_matchupHTML(4, 0, 1, results)}</div></div>
     </div>
     <div class="bracket-half">
-      ${_regionHTML(2, true, results)}
+      ${_regionHTML(1, true, results)}
       ${_regionHTML(3, true, results)}
     </div>
   </div>`;
