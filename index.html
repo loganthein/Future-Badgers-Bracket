@@ -482,6 +482,27 @@ body {
 }
 #lock-btn { display: none; }
 
+/* Saving spinner */
+@keyframes _spin { to { transform: rotate(360deg); } }
+#bracket-saving {
+  text-align: center;
+  padding: .25rem 0 .5rem;
+}
+.saving-spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid rgba(197,5,12,.18);
+  border-top-color: var(--red);
+  border-radius: 50%;
+  animation: _spin .75s linear infinite;
+  margin: 0 auto .6rem;
+}
+.saving-text {
+  font-weight: 700;
+  font-size: .92rem;
+  color: var(--text);
+}
+
 /* Tiebreaker section (shown when all 63 picks made) */
 #tiebreaker-section {
   display: none;
@@ -1059,6 +1080,10 @@ body {
     <button id="lock-btn" class="btn btn-primary btn-lg" onclick="lockBracket()">
       Lock In My Bracket!
     </button>
+    <div id="bracket-saving" style="display:none">
+      <div class="saving-spinner"></div>
+      <div class="saving-text">Locking in your bracket... this takes about 20 seconds</div>
+    </div>
     <div class="hint" id="lock-hint">Pick all games to unlock the submit button!</div>
   </div>
 </div>
