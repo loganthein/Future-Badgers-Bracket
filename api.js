@@ -1,10 +1,27 @@
-// API layer — reads from GitHub / writes via Actions workflow_dispatch
+// API layer — reads/writes GitHub Gists
 
 async function _fetchGist(gistId) {
   const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
     headers: { 'Accept': 'application/vnd.github.v3+json' },
   });
   if (!resp.ok) throw new Error(`Gist fetch failed: ${resp.status}`);
+  return resp.json();
+}
+
+async function _patchGist(gistId, filename, content) {
+  const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
+    method: 'PATCH',
+    headers: {
+      'Authorization': `token ${CONFIG.GIST_TOKEN}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/vnd.github.v3+json',
+    },
+    body: JSON.stringify({ files: { [filename]: { content } } }),
+  });
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error(err.message || `Gist PATCH failed: ${resp.status}`);
+  }
   return resp.json();
 }
 
@@ -17,12 +34,10 @@ async function fetchBracketData() {
 
 async function fetchAllPicks() {
   try {
-    const url = `https://raw.githubusercontent.com/${CONFIG.REPO_OWNER}/${CONFIG.REPO_NAME}/main/bracket-picks.json?t=${Date.now()}`;
-    const resp = await fetch(url);
-    if (!resp.ok) return {};
-    const text = await resp.text();
-    if (!text.trim() || text.trim() === 'null') return {};
-    return JSON.parse(text);
+    const gist = await _fetchGist(CONFIG.PICKS_GIST_ID);
+    const file = gist.files[CONFIG.PICKS_FILENAME];
+    if (!file || !file.content || !file.content.trim() || file.content.trim() === 'null') return {};
+    return JSON.parse(file.content);
   } catch (e) {
     console.warn('fetchAllPicks failed:', e.message);
     return {};
@@ -33,33 +48,16 @@ async function fetchAllPicks() {
 // type: 'badger' | 'future_badger'
 // tiebreaker: integer (Wisconsin 3-point guess)
 async function submitPicks(nickname, picks, type, tiebreaker) {
-  const token = localStorage.getItem('workflow_token');
-  if (!token) throw new Error('No workflow token saved. Please set it up from the welcome screen.');
-
-  const url = `https://api.github.com/repos/${CONFIG.REPO_OWNER}/${CONFIG.REPO_NAME}/actions/workflows/${CONFIG.WORKFLOW_FILE}/dispatches`;
-
-  const inputs = {
-    nickname,
+  const current = await fetchAllPicks();
+  current[nickname] = {
+    picks,
     type,
-    picks: JSON.stringify(picks),
+    tiebreaker,
+    submittedAt: new Date().toISOString(),
   };
-  if (tiebreaker != null && tiebreaker !== '') {
-    inputs.tiebreaker = String(tiebreaker);
-  }
-
-  const resp = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Authorization': `token ${token}`,
-      'Accept': 'application/vnd.github.v3+json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ ref: 'main', inputs }),
-  });
-
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({}));
-    throw new Error(err.message || `Workflow dispatch failed: ${resp.status}`);
-  }
-  // 204 No Content on success — no body to parse
+  await _patchGist(
+    CONFIG.PICKS_GIST_ID,
+    CONFIG.PICKS_FILENAME,
+    JSON.stringify(current, null, 2)
+  );
 }
