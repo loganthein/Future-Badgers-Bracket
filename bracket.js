@@ -44,6 +44,35 @@ function getRoundFromIndex(i) {
 }
 
 // ============================================================
+// Team logo URLs (ESPN CDN)
+// ============================================================
+
+const TEAM_ESPN_IDS = {
+  'Duke':150,'UConn':41,'Michigan State':127,'Kansas':2305,
+  "St. John's":2599,'Louisville':97,'UCLA':26,'Ohio State':194,
+  'TCU':2628,'UCF':2116,'South Florida':58,'Northern Iowa':2513,
+  'Cal Baptist':2856,'North Dakota State':2439,'Furman':231,'Siena':2561,
+  'Arizona':12,'Purdue':2509,'Gonzaga':2250,'Arkansas':8,'Wisconsin':275,
+  'BYU':252,'Miami (FL)':2390,'Villanova':222,'Utah State':328,
+  'Missouri':142,'High Point':2884,'Hawaii':62,'Kennesaw State':2318,
+  'Queens':2910,'LIU':2799,'Texas':251,'NC State':152,
+  'Florida':57,'Houston':248,'Illinois':356,'Nebraska':158,
+  'Vanderbilt':238,'North Carolina':153,"Saint Mary's":2608,
+  'Clemson':228,'Iowa':2294,'Texas A&M':245,'VCU':2670,'McNeese':2382,
+  'Troy':2737,'Penn':219,'Idaho':70,'Prairie View A&M':2330,'Lehigh':2350,
+  'Michigan':130,'Iowa State':66,'Virginia':258,'Alabama':333,
+  'Texas Tech':2641,'Tennessee':2633,'Kentucky':96,'Georgia':61,
+  'Saint Louis':139,'Santa Clara':2610,'Akron':2006,'Hofstra':2272,
+  'Wright State':2750,'Tennessee State':2640,'UMBC':2378,'Howard':47,
+  'SMU':2567,'Miami (OH)':193,
+};
+
+function getTeamLogoUrl(teamName) {
+  const id = TEAM_ESPN_IDS[teamName];
+  return id ? `https://a.espncdn.com/i/teamlogos/ncaa/500/${id}.png` : null;
+}
+
+// ============================================================
 // Team helpers
 // ============================================================
 
@@ -224,11 +253,15 @@ function _matchupHTML(round, regionIdx, gameInRegion, results) {
     const info = getTeamInfo(rawName);
     const seedSpan = info ? `<span class="team-seed">${info.seed}</span>` : '';
     const nameSpan = `<span class="team-name">${_esc(rawName)}</span>`;
+    const logoUrl  = round === 0 ? getTeamLogoUrl(rawName) : null;
+    const logoImg  = logoUrl
+      ? `<img src="${logoUrl}" class="team-logo" alt="" onerror="this.style.display='none'">`
+      : '';
     return `<button class="${cls}"
       data-game="${idx}"
       data-team="${rawName.replace(/"/g,'&quot;')}"
       ${locked ? 'disabled' : ''}
-    >${seedSpan}${nameSpan}</button>`;
+    >${seedSpan}${logoImg}${nameSpan}</button>`;
   }
 
   return `<div class="matchup" data-game="${idx}">${btnHTML(t1raw)}${btnHTML(t2raw)}</div>`;

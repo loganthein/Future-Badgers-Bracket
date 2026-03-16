@@ -384,6 +384,20 @@ body {
 .team-slot.empty   { background: var(--gray); color: var(--muted); cursor: default; font-style: italic; font-weight: 600; }
 .team-slot[disabled]:not(.empty):not(.correct):not(.wrong) { cursor: default; }
 
+.team-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: 2px;
+}
+.champ-logo {
+  object-fit: contain;
+  vertical-align: middle;
+  margin-right: 3px;
+  border-radius: 2px;
+}
+
 .team-seed {
   font-size: .65rem;
   background: rgba(0,0,0,.1);

@@ -130,7 +130,9 @@ function _renderEntries(allEntries, results, bdata) {
     }
 
     const scoreDisplay = picksVisible ? `${entry.score} pts` : '—';
-    const championDisplay = picksVisible ? `🏆 ${_escLb(entry.champion)}` : '🔒';
+    const champLogoHtml = picksVisible && entry.champion && entry.champion !== '—'
+      ? _champLogoImg(entry.champion, 16) : '';
+    const championDisplay = picksVisible ? `🏆 ${champLogoHtml}${_escLb(entry.champion)}` : '🔒';
     const detailContent = picksVisible
       ? _buildPicksDetail(entry.picks, results, bdata)
       : '<div class="picks-locked">🔒 Picks are revealed when the tournament begins — check back Thursday at 11am!</div>';
@@ -182,6 +184,12 @@ function _escLb(str) {
   return (str || '').replace(/[&<>"']/g, c =>
     ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
   );
+}
+
+function _champLogoImg(teamName, size) {
+  const url = getTeamLogoUrl(teamName);
+  if (!url) return '';
+  return `<img src="${url}" class="champ-logo" width="${size}" height="${size}" alt="" onerror="this.style.display='none'">`;
 }
 
 function toggleLbDetail(rowId) {
@@ -240,7 +248,7 @@ function _renderAwards(allEntries, results, bdata) {
     // Show champion pick only if all tied winners picked the same team (or just first)
     const pick = winners[0].champion;
     return pick && pick !== '—'
-      ? `<div class="award-champ-pick">🏆 picked: ${_escLb(pick)}</div>`
+      ? `<div class="award-champ-pick">🏆 ${_champLogoImg(pick, 16)}picked: ${_escLb(pick)}</div>`
       : '';
   }
 
