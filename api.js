@@ -2,7 +2,7 @@
 
 async function _fetchGist(gistId) {
   const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
-    headers: { 'Cache-Control': 'no-cache', 'Accept': 'application/vnd.github.v3+json' },
+    headers: { 'Accept': 'application/vnd.github.v3+json' },
   });
   if (!resp.ok) throw new Error(`Gist fetch failed: ${resp.status}`);
   return resp.json();
