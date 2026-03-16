@@ -1,30 +1,20 @@
-// API layer — reads from GitHub Gists, writes directly to Gist API
-
-const _GH_HEADERS = {
-  'Accept': 'application/vnd.github.v3+json',
-};
-
-async function _fetchGist(gistId) {
-  const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
-    headers: _GH_HEADERS,
-  });
-  if (!resp.ok) throw new Error(`Gist fetch failed: ${resp.status}`);
-  return resp.json();
-}
+// API layer — reads from GitHub Gists (unauthenticated), writes directly to Gist API
 
 async function fetchBracketData() {
-  const gist = await _fetchGist(CONFIG.BRACKET_DATA_GIST_ID);
-  const file = gist.files[CONFIG.BRACKET_DATA_FILENAME];
-  if (!file) throw new Error('bracket-data.json not found in gist');
-  return JSON.parse(file.content);
+  const url  = `https://gist.githubusercontent.com/${CONFIG.REPO_OWNER}/${CONFIG.BRACKET_DATA_GIST_ID}/raw/${CONFIG.BRACKET_DATA_FILENAME}?t=${Date.now()}`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`Failed to load bracket data: ${resp.status}`);
+  return resp.json();
 }
 
 async function fetchAllPicks() {
   try {
-    const gist = await _fetchGist(CONFIG.PICKS_GIST_ID);
-    const file = gist.files[CONFIG.PICKS_FILENAME];
-    if (!file || !file.content || !file.content.trim() || file.content.trim() === 'null') return {};
-    return JSON.parse(file.content);
+    const url  = `https://gist.githubusercontent.com/${CONFIG.REPO_OWNER}/${CONFIG.PICKS_GIST_ID}/raw/${CONFIG.PICKS_FILENAME}?t=${Date.now()}`;
+    const resp = await fetch(url);
+    if (!resp.ok) return {};
+    const text = await resp.text();
+    if (!text.trim() || text.trim() === 'null') return {};
+    return JSON.parse(text);
   } catch (e) {
     console.warn('fetchAllPicks failed:', e.message);
     return {};
@@ -37,8 +27,8 @@ async function fetchAllPicks() {
 // type: 'badger' | 'future_badger'
 // tiebreaker: integer (Wisconsin 3-point guess)
 async function submitPicks(nickname, picks, type, tiebreaker) {
-  // Fetch current picks
-  const rawUrl = `https://gist.githubusercontent.com/${CONFIG.REPO_OWNER}/${CONFIG.PICKS_GIST_ID}/raw/${CONFIG.PICKS_FILENAME}?t=${Date.now()}`;
+  // Fetch current picks (unauthenticated raw read)
+  const rawUrl  = `https://gist.githubusercontent.com/${CONFIG.REPO_OWNER}/${CONFIG.PICKS_GIST_ID}/raw/${CONFIG.PICKS_FILENAME}?t=${Date.now()}`;
   const rawResp = await fetch(rawUrl);
   let current = {};
   if (rawResp.ok) {
@@ -63,7 +53,7 @@ async function submitPicks(nickname, picks, type, tiebreaker) {
     submittedAt: new Date().toISOString(),
   };
 
-  // PATCH the Gist
+  // PATCH the Picks Gist (authenticated write)
   const t = "ghp_00lGF9vzOch987qGWd" + "kHtEBXd4tl9a25qFQE";
   const patchResp = await fetch(`https://api.github.com/gists/${CONFIG.PICKS_GIST_ID}`, {
     method: 'PATCH',
