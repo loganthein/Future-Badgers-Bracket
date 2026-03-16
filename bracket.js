@@ -446,12 +446,7 @@ function _updateMobileTabs(results) {
       tab.classList.toggle('active', _mobileRegion === 4);
     }
   });
-  const made   = userPicks.filter(p => p !== null).length;
-  const progEl = document.getElementById('mobile-progress');
-  if (progEl) {
-    progEl.textContent = made === 63 ? 'All 63 picks made!' : `${made} of 63 picks made`;
-    progEl.classList.toggle('all-done', made === 63);
-  }
+  _updateProgressBar();
 }
 
 function renderBracket() {
@@ -473,6 +468,15 @@ function renderBracket() {
 
   // NCAA layout: East(0)+South(2) on left, West(1)+Midwest(3) on right.
   // FF game 0 = East vs South (left FF), FF game 1 = West vs Midwest (right FF).
+  const champ     = userPicks[62];
+  const champLogo = champ ? getTeamLogoUrl(champ) : null;
+  const champHeroHTML = champ
+    ? `<div class="champ-hero">
+        ${champLogo ? `<img src="${champLogo}" class="champ-hero-logo" alt="" onerror="this.style.display='none'">` : ''}
+        <div class="champ-hero-name">${_esc(champ)}</div>
+       </div>`
+    : `<div class="champ-hero empty">🏆</div>`;
+
   container.innerHTML = `<div class="bracket-inner">
     <div class="bracket-half">
       ${_regionHTML(0, false, results)}
@@ -480,12 +484,15 @@ function renderBracket() {
     </div>
     <div class="bracket-center">
       <div class="center-label">Final Four</div>
-      <div class="ff-row"><div class="ff-slot">${_matchupHTML(4, 0, 0, results)}</div></div>
-      <div class="champ-row">
-        <div class="champ-label">Championship</div>
-        <div class="champ-slot">${_matchupHTML(5, 0, 0, results)}</div>
+      <div class="ff-spine">
+        <div class="ff-row"><div class="ff-slot">${_matchupHTML(4, 0, 0, results)}</div></div>
+        <div class="champ-row">
+          ${champHeroHTML}
+          <div class="champ-label">Championship</div>
+          <div class="champ-slot">${_matchupHTML(5, 0, 0, results)}</div>
+        </div>
+        <div class="ff-row"><div class="ff-slot">${_matchupHTML(4, 0, 1, results)}</div></div>
       </div>
-      <div class="ff-row"><div class="ff-slot">${_matchupHTML(4, 0, 1, results)}</div></div>
     </div>
     <div class="bracket-half">
       ${_regionHTML(1, true, results)}
@@ -498,10 +505,28 @@ function renderBracket() {
   });
 }
 
+function _updateProgressBar() {
+  const made = userPicks.filter(p => p !== null).length;
+  const fill = document.getElementById('pick-progress-fill');
+  const text = document.getElementById('pick-progress-text');
+  if (fill) fill.style.width = ((made / 63) * 100) + '%';
+  if (text) {
+    if (made === 63) {
+      text.textContent = 'All picks made! Enter your tiebreaker to lock in.';
+      text.classList.add('complete');
+    } else {
+      text.textContent = made + ' of 63 picks made';
+      text.classList.remove('complete');
+    }
+  }
+}
+
 function updateLockButton() {
   const btn       = document.getElementById('lock-btn');
   const tbSection = document.getElementById('tiebreaker-section');
   if (!btn) return;
+
+  _updateProgressBar();
 
   const allDone = allPicksMade();
   if (tbSection) tbSection.style.display = allDone ? 'block' : 'none';
