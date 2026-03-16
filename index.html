@@ -254,13 +254,16 @@ body {
   display: flex;
   flex-direction: row;
   align-items: stretch;
-  min-width: 1400px;
+  width: 100%;
+  min-width: 960px; /* 4×100px×2 halves + 180px center */
 }
 
+/* Each half stretches to fill (100% - center) / 2 */
 .bracket-half {
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-width: 0; /* allow shrink below intrinsic */
 }
 
 .region-block { display: flex; flex-direction: column; }
@@ -277,18 +280,21 @@ body {
 }
 .region-label.pos-right { align-self: flex-end; }
 
-.region-rounds { display: flex; flex-direction: row; height: 560px; }
+/* region-rounds fills the full width of the bracket-half */
+.region-rounds { display: flex; flex-direction: row; height: 560px; width: 100%; }
 /* Right half: HTML order [R4,R3,R2,R1] + normal row = E8 left, R64 right ✓ */
 
+/* Round columns flex to fill available width evenly */
 .round-col {
   display: flex;
   flex-direction: column;
-  height: 560px;
-  width: 125px;
-  min-width: 125px;
-  padding: 0 3px;
+  flex: 1;
+  min-width: 100px;
+  padding: 0 4px;
   overflow: visible; /* connector lines bleed into column gaps */
 }
+/* R64 gets slightly more space — team names need it */
+.round-col[data-round="0"] { min-width: 110px; }
 
 /* Two consecutive matchups in a pair — spacing via justify-content, lines via ::before/::after */
 .game-pair {
