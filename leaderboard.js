@@ -443,11 +443,29 @@ function _buildPicksDetail(picks, results, bdata) {
 
 // ── Read-only results bracket (Bracket tab on leaderboard) ──
 
+let _lbBracketPerson = null; // selected nickname, or null for results-only
+
+function setLbBracketPerson(nickname) {
+  _lbBracketPerson = nickname || null;
+  if (_cachedResults && _cachedBdata) renderLbBracket(_cachedResults, _cachedBdata);
+}
+
 function renderLbBracket(results, bdata) {
   const container = document.getElementById('lb-bracket-view');
   if (!container) return;
 
   const clickable = _picksVisible();
+  const entries   = _cachedEntries || [];
+
+  // Resolve selected person's picks
+  const selEntry   = _lbBracketPerson
+    ? entries.find(e => e.nickname === _lbBracketPerson)
+    : null;
+  const selPicks   = selEntry?.picks || null;
+
+  // Score summary for selected person
+  const selScore   = selEntry ? selEntry.score : null;
+  const selMax     = selEntry ? selEntry.maxAvailable : null;
 
   function seedOf(name) {
     for (const r of REGIONS) {
@@ -457,28 +475,42 @@ function renderLbBracket(results, bdata) {
     return null;
   }
 
-  function slotHTML(name, winner) {
+  function slotHTML(name, idx) {
+    const winner     = results[idx];
+    const personPick = selPicks ? selPicks[idx] : null;
     if (!name) return `<div class="lb-slot empty">TBD</div>`;
+
     let cls = 'lb-slot';
-    if (name === winner)   cls += ' win';
-    else if (winner)       cls += ' lose';
+    let icon = '';
+
+    if (selPicks) {
+      // Person-overlay mode
+      if (personPick === name && !winner)           { cls += ' lbs-pending'; }
+      else if (personPick === name && winner === name) { cls += ' lbs-correct'; icon = '✓ '; }
+      else if (personPick === name && winner && winner !== name) { cls += ' lbs-wrong'; icon = '✗ '; }
+      else if (winner === name)   cls += ' win';
+      else if (winner)            cls += ' lose';
+    } else {
+      if (winner === name)   cls += ' win';
+      else if (winner)       cls += ' lose';
+    }
+
     const seed    = seedOf(name);
     const badge   = seed ? `<span class="team-seed">${seed}</span>` : '';
     const logoUrl = getTeamLogoUrl(name);
     const logo    = logoUrl
       ? `<img src="${logoUrl}" class="team-logo" alt="" onerror="this.style.display='none'">`
       : '';
-    return `<div class="${cls}">${badge}${logo}<span class="team-name">${_escLb(name)}</span></div>`;
+    return `<div class="${cls}">${icon}${badge}${logo}<span class="team-name">${_escLb(name)}</span></div>`;
   }
 
   function matchupHTML(idx) {
-    const [t1, t2] = _getGameParticipants(idx, results, bdata);
-    const winner   = results[idx];
+    const [t1, t2]  = _getGameParticipants(idx, results, bdata);
     const clickAttr = clickable
       ? `onclick="showGameDist(${idx})" title="See who picked this game"`
       : '';
     return `<div class="matchup lb-matchup" data-game="${idx}" ${clickAttr}>
-      ${slotHTML(t1, winner)}${slotHTML(t2, winner)}
+      ${slotHTML(t1, idx)}${slotHTML(t2, idx)}
     </div>`;
   }
 
@@ -508,7 +540,40 @@ function renderLbBracket(results, bdata) {
     </div>`;
   }
 
+  // Dropdown options — sort entries by score desc then alpha
+  const sorted = [...entries].sort((a, b) =>
+    b.score !== a.score ? b.score - a.score : a.nickname.localeCompare(b.nickname)
+  );
+  const options = sorted.map(e => {
+    const label = clickable
+      ? `${_escLb(e.nickname)} (${e.score} pts)`
+      : _escLb(e.nickname);
+    const sel = e.nickname === _lbBracketPerson ? ' selected' : '';
+    return `<option value="${_escLb(e.nickname)}"${sel}>${label}</option>`;
+  }).join('');
+
+  const scoreBadge = selEntry && clickable
+    ? `<span class="lb-bracket-score">${selScore} pts · Max: ${selMax}</span>`
+    : '';
+
+  const legend = selPicks && clickable
+    ? `<div class="lb-bracket-legend">
+        <span class="lbl-chip lbs-correct">✓ Correct</span>
+        <span class="lbl-chip lbs-wrong">✗ Wrong</span>
+        <span class="lbl-chip lbs-pending">Pending</span>
+        <span class="lbl-chip win">Won</span>
+      </div>`
+    : '';
+
   container.innerHTML = `
+    <div class="lb-bracket-controls">
+      <select class="lb-bracket-select" onchange="setLbBracketPerson(this.value)">
+        <option value="">— Results only —</option>
+        ${options}
+      </select>
+      ${scoreBadge}
+    </div>
+    ${legend}
     <div class="bracket-scroll-wrapper">
       <div class="bracket-inner">
         <div class="bracket-half">
