@@ -9,13 +9,13 @@ let _cachedResults    = null;
 let _cachedBdata      = null;
 let _currentLbTab     = 'overall';
 
-const TYPE_EMOJI = {
-  badger:        '🦡👴',
-  future_badger: '🦡👶',
+const TYPE_LABEL = {
+  badger:        'Badger Alum',
+  future_badger: 'Future Badger',
 };
 
 function _typeEmoji(type) {
-  return TYPE_EMOJI[type] || '🦡';
+  return TYPE_LABEL[type] || '';
 }
 
 // ── Tab switching ──────────────────────────────────────────
@@ -40,7 +40,7 @@ async function _refreshLeaderboard() {
   const listEl = document.getElementById('leaderboard-list');
   if (!listEl) return;
 
-  listEl.innerHTML = '<div class="loading">Loading scores… 🦡</div>';
+  listEl.innerHTML = '<div class="loading">Loading scores...</div>';
 
   let bdata, allPicks;
   try {
@@ -90,7 +90,7 @@ function _renderEntries(allEntries, results, bdata) {
     : allEntries.filter(e => e.type === _currentLbTab);
 
   if (entries.length === 0) {
-    listEl.innerHTML = '<div class="empty-state">No brackets here yet — be the first! 🦡</div>';
+    listEl.innerHTML = '<div class="empty-state">No brackets here yet — be the first!</div>';
     return;
   }
 
@@ -105,8 +105,8 @@ function _renderEntries(allEntries, results, bdata) {
   if (tbNote) {
     tbNote.style.display = tbActive ? 'block' : 'none';
     tbNote.textContent   = tbActive
-      ? `🏀 Tiebreaker answer: ${wisThrees} three-pointers`
-      : '🏀 Tiebreaker: closest Wisconsin 3-point guess wins ties (answer TBD)';
+      ? `Tiebreaker answer: ${wisThrees} three-pointers`
+      : 'Tiebreaker: closest Wisconsin 3-point guess wins ties (answer TBD)';
     tbNote.style.display = 'block'; // always show the note
   }
 
@@ -115,7 +115,7 @@ function _renderEntries(allEntries, results, bdata) {
   let html = '';
   entries.forEach((entry, i) => {
     const rank   = i + 1;
-    const medal  = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+    const medal  = `#${rank}`;
     const emoji  = _typeEmoji(entry.type);
     const safeId = `lbrow-${i}`;
 
@@ -125,17 +125,17 @@ function _renderEntries(allEntries, results, bdata) {
       tbDisplay = String(entry.tiebreaker);
       if (tbActive) {
         const diff = Math.abs(entry.tiebreaker - wisThrees);
-        tbDisplay += ` <span class="tb-diff">(${diff === 0 ? 'exact! 🎯' : `off by ${diff}`})</span>`;
+        tbDisplay += ` <span class="tb-diff">(${diff === 0 ? 'exact!' : `off by ${diff}`})</span>`;
       }
     }
 
     const scoreDisplay = picksVisible ? `${entry.score} pts` : '—';
     const champLogoHtml = picksVisible && entry.champion && entry.champion !== '—'
       ? _champLogoImg(entry.champion, 16) : '';
-    const championDisplay = picksVisible ? `🏆 ${champLogoHtml}${_escLb(entry.champion)}` : '🔒';
+    const championDisplay = picksVisible ? `${champLogoHtml}${_escLb(entry.champion)}` : 'Hidden';
     const detailContent = picksVisible
       ? _buildPicksDetail(entry.picks, results, bdata)
-      : '<div class="picks-locked">🔒 Picks are revealed when the tournament begins — check back Thursday at 11am!</div>';
+      : '<div class="picks-locked">Picks are revealed when the tournament begins — check back Thursday at 11am!</div>';
     const clickHandler = picksVisible ? `onclick="toggleLbDetail('${safeId}')"` : '';
     const expandArrow  = picksVisible ? '<span class="lb-expand">▼</span>' : '';
 
@@ -230,7 +230,7 @@ function _renderAwards(allEntries, results, bdata) {
   const futureB  = topOf(allEntries.filter(e => e.type === 'future_badger'));
 
   function winnerLine(winners) {
-    if (!visible) return `<div class="award-winner tbd">Filling out brackets… 🦡</div>`;
+    if (!visible) return `<div class="award-winner tbd">Filling out brackets...</div>`;
     if (!winners.length) return `<div class="award-winner tbd">No entries yet</div>`;
     return winners.map(w =>
       `<div class="award-winner">${_typeEmojiAward(w.type)} ${_escLb(w.nickname)}</div>`
@@ -248,13 +248,13 @@ function _renderAwards(allEntries, results, bdata) {
     // Show champion pick only if all tied winners picked the same team (or just first)
     const pick = winners[0].champion;
     return pick && pick !== '—'
-      ? `<div class="award-champ-pick">🏆 ${_champLogoImg(pick, 16)}picked: ${_escLb(pick)}</div>`
+      ? `<div class="award-champ-pick">${_champLogoImg(pick, 16)}${_escLb(pick)}</div>`
       : '';
   }
 
   function card(title, winners, isOverall) {
     const highlight = crowned && isOverall && winners.length > 0;
-    const confetti  = highlight ? ' 🎉' : '';
+    const confetti  = '';
     return `<div class="award-card${highlight ? ' crowned' : ''}">
       <div class="award-title">${title}${confetti}</div>
       ${winnerLine(winners)}
@@ -264,15 +264,15 @@ function _renderAwards(allEntries, results, bdata) {
   }
 
   el.innerHTML = `<div class="awards-grid">
-    ${card('🏆 Overall Champion',    overall, true)}
-    ${card('🏆 Top Badger Alum',     alums,   false)}
-    ${card('🏆 Top Future Badger',   futureB, false)}
+    ${card('Overall Champion',  overall, true)}
+    ${card('Top Badger Alum',   alums,   false)}
+    ${card('Top Future Badger', futureB, false)}
   </div>`;
   el.style.display = 'block';
 }
 
 function _typeEmojiAward(type) {
-  return type === 'badger' ? '👴👵' : type === 'future_badger' ? '👦👧' : '🦡';
+  return type === 'badger' ? 'Badger Alum' : type === 'future_badger' ? 'Future Badger' : '';
 }
 
 function _buildPicksDetail(picks, results, bdata) {
@@ -300,7 +300,7 @@ function _buildPicksDetail(picks, results, bdata) {
       <div class="picks-round-label">${ROUND_NAMES[r]} (${ROUND_POINTS[r]} pt${ROUND_POINTS[r] > 1 ? 's' : ''})</div>
       <div class="picks-list">`;
     roundPicks.forEach(({ pick, status }) => {
-      const icon = status === 'correct' ? '✅' : status === 'wrong' ? '❌' : '⏳';
+      const icon = status === 'correct' ? '✓' : status === 'wrong' ? '✗' : '';
       html += `<span class="pick-chip pick-${status || 'pending'}">${icon} ${_escLb(pick)}</span>`;
     });
     html += '</div></div>';

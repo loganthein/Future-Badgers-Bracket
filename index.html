@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🦡 Future Badgers Bracket Challenge</title>
+<title>Future Badgers Bracket Challenge</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="alternate icon" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -211,7 +211,6 @@ body {
   box-shadow: 0 4px 16px rgba(0,0,0,.1);
 }
 .type-card:active { opacity: .88; }
-.type-card .tc-emoji { font-size: 3.2rem; line-height: 1.1; letter-spacing: .1em; }
 .type-card .tc-title {
   font-family: 'Nunito', sans-serif;
   font-weight: 800;
@@ -521,7 +520,6 @@ body {
   padding: 2.25rem 1.25rem 1.75rem;
   text-align: center;
 }
-.success-check { display: block; font-size: 3.5rem; line-height: 1; margin-bottom: .5rem; }
 .success-header h2 { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 2rem; margin-bottom: .4rem; }
 .success-header p  { font-size: .95rem; opacity: .9; font-weight: 600; }
 
@@ -836,7 +834,7 @@ body {
 ══════════════════════════════════════════ -->
 <div id="page-admin-setup" class="page">
   <div class="admin-card">
-    <h2>🦡 Admin Setup</h2>
+    <h2>Admin Setup</h2>
     <p>Enter your GitHub Gist token to enable bracket saving and loading.<br>
        This is stored only in your browser — never in the code.</p>
     <label for="admin-token-input">Enter Gist Token</label>
@@ -871,7 +869,7 @@ body {
     <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Bucky_Badger.svg/200px-Bucky_Badger.svg.png"
          alt="Bucky Badger" class="hero-bucky"
          onerror="this.src='https://uwbadgers.com/images/logos/site/site.png';this.onerror=function(){this.style.display='none'};">
-    <p>Pick your winners and climb the leaderboard! 🏀</p>
+    <p>Pick your winners and climb the leaderboard!</p>
   </div>
 
   <div class="welcome-card">
@@ -892,7 +890,7 @@ body {
         Continue →
       </button>
       <button class="btn btn-secondary" onclick="handleViewLeaderboard()">
-        🏆 View Leaderboard
+        View Leaderboard
       </button>
     </div>
 
@@ -922,23 +920,21 @@ body {
   </header>
 
   <div class="type-select-body">
-    <h2>Are you a Badger? 🦡</h2>
+    <h2>Are you a Badger?</h2>
     <p>Tell us who you are so we can sort the leaderboard!</p>
 
     <div class="type-cards">
       <button class="type-card" onclick="selectType('badger')">
-        <span class="tc-emoji">👴👵</span>
         <span class="tc-title">Badger Alum</span>
         <span class="tc-sub">I'm a grown-up</span>
       </button>
       <button class="type-card" onclick="selectType('future_badger')">
-        <span class="tc-emoji">👦👧</span>
         <span class="tc-title">Future Badger</span>
         <span class="tc-sub">I'm a kid</span>
       </button>
     </div>
 
-    <div class="type-loading" id="type-loading">Checking your nickname… 🦡</div>
+    <div class="type-loading" id="type-loading">Checking your nickname...</div>
   </div>
 </div>
 
@@ -948,24 +944,24 @@ body {
 <div id="page-bracket" class="page">
   <div class="bracket-header">
     <button class="btn btn-secondary" style="padding:.4rem 1rem;font-size:.9rem" onclick="showPage('page-welcome')">← Back</button>
-    <h2>🦡 Pick Your Bracket!</h2>
+    <h2>Pick Your Bracket</h2>
     <span id="bracket-player-name"></span>
   </div>
 
   <div class="bracket-tip">
-    👆 Tap a team name to pick the winner — go all the way through the Championship!
+    Tap a team name to pick the winner — go all the way through the Championship!
   </div>
 
   <div class="bracket-scroll-wrapper">
     <div id="bracket-scroll">
-      <div class="loading">Loading teams… 🦡</div>
+      <div class="loading">Loading teams...</div>
     </div>
   </div>
 
   <div class="lock-bar">
     <div id="tiebreaker-section">
       <label class="tb-label" for="tiebreaker-input">
-        🏀 How many 3-pointers will Wisconsin make in the whole tournament?
+        How many 3-pointers will Wisconsin make in the whole tournament?
       </label>
       <input
         type="number"
@@ -977,7 +973,7 @@ body {
       >
     </div>
     <button id="lock-btn" class="btn btn-primary btn-lg" onclick="lockBracket()">
-      🔒 Lock In My Bracket!
+      Lock In My Bracket!
     </button>
     <div class="hint" id="lock-hint">Pick all games to unlock the submit button!</div>
   </div>
@@ -988,7 +984,6 @@ body {
 ══════════════════════════════════════════ -->
 <div id="page-success" class="page">
   <div class="success-header">
-    <span class="success-check">🎉</span>
     <h2>
       <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Wisconsin_Badgers_logo.svg/200px-Wisconsin_Badgers_logo.svg.png"
            alt="Wisconsin W" class="success-w-logo">
@@ -999,8 +994,8 @@ body {
   <div class="success-body">
     <div id="success-champ"></div>
     <div class="success-actions">
-      <button class="btn btn-secondary" onclick="printBracket()">🖨️ Print My Bracket</button>
-      <button class="btn btn-primary"   onclick="handleViewLeaderboard()">🏆 View Leaderboard</button>
+      <button class="btn btn-secondary" onclick="printBracket()">Print My Bracket</button>
+      <button class="btn btn-primary"   onclick="handleViewLeaderboard()">View Leaderboard</button>
     </div>
   </div>
 </div>
@@ -1010,16 +1005,16 @@ body {
 ══════════════════════════════════════════ -->
 <div id="page-leaderboard" class="page">
   <div class="lb-header">
-    <h2>🏆 Leaderboard</h2>
+    <h2>Leaderboard</h2>
     <span id="lb-updated"></span>
   </div>
 
   <div id="awards-section" class="awards-section" style="display:none"></div>
 
   <div class="lb-tabs-bar">
-    <button class="lb-tab active" data-tab="overall"        onclick="setLbTab('overall')">🦡 Overall</button>
-    <button class="lb-tab"        data-tab="badger"         onclick="setLbTab('badger')">🦡👴 Badger Alums</button>
-    <button class="lb-tab"        data-tab="future_badger"  onclick="setLbTab('future_badger')">🦡👶 Future Badgers</button>
+    <button class="lb-tab active" data-tab="overall"        onclick="setLbTab('overall')">Overall</button>
+    <button class="lb-tab"        data-tab="badger"         onclick="setLbTab('badger')">Badger Alums</button>
+    <button class="lb-tab"        data-tab="future_badger"  onclick="setLbTab('future_badger')">Future Badgers</button>
   </div>
 
   <div class="lb-container">
@@ -1030,11 +1025,11 @@ body {
     </div>
     <div class="lb-tb-note" id="lb-tb-note" style="display:none"></div>
     <div id="leaderboard-list">
-      <div class="loading">Loading scores… 🦡</div>
+      <div class="loading">Loading scores...</div>
     </div>
     <div class="lb-actions">
-      <button class="btn btn-primary"   onclick="handleContinue()">🦡 Fill Out My Bracket</button>
-      <button class="btn btn-secondary" onclick="initLeaderboard()">🔄 Refresh</button>
+      <button class="btn btn-primary"   onclick="handleContinue()">Fill Out My Bracket</button>
+      <button class="btn btn-secondary" onclick="initLeaderboard()">Refresh</button>
     </div>
   </div>
 </div>
@@ -1103,7 +1098,7 @@ function handleContinue() {
     showPage('page-welcome');
     setTimeout(() => {
       document.getElementById('nickname-input').focus();
-      document.getElementById('nickname-input').placeholder = '⬆ Enter your nickname first!';
+      document.getElementById('nickname-input').placeholder = 'Enter your nickname first!';
     }, 50);
     return;
   }
@@ -1136,22 +1131,20 @@ let _successTiebreaker = null;
 
 function initSuccessPage(tbVal) {
   _successTiebreaker = tbVal;
-  const typeEmoji = currentUserType === 'badger' ? '👴👵' : '👦👧';
   const typeLabel = currentUserType === 'badger' ? 'Badger Alum' : 'Future Badger';
   const sub = document.getElementById('success-subtitle');
-  if (sub) sub.textContent = `${typeEmoji} ${typeLabel} · ${currentNickname} · Tiebreaker: ${tbVal} 3-pointers`;
+  if (sub) sub.textContent = `${typeLabel} · ${currentNickname} · Tiebreaker: ${tbVal} 3-pointers`;
 
   const champEl = document.getElementById('success-champ');
   if (champEl) {
     const champ = userPicks[62];
     champEl.innerHTML = champ
-      ? `<div class="success-champ">Your champion pick: 🏆 <strong>${champ}</strong></div>`
+      ? `<div class="success-champ">Your champion pick: <strong>${champ}</strong></div>`
       : '';
   }
 }
 
 function printBracket() {
-  const typeEmoji = currentUserType === 'badger' ? '👴👵' : '👦👧';
   const typeLabel = currentUserType === 'badger' ? 'Badger Alum' : 'Future Badger';
 
   function esc(s) {
@@ -1210,8 +1203,8 @@ body { font-family: Arial, Helvetica, sans-serif; color: #1a1a1a; background: #f
 </head>
 <body>
 <div class="header">
-  <h1>🦡 Future Badgers Bracket Challenge</h1>
-  <div class="meta">${typeEmoji} <strong>${typeLabel}:</strong> ${esc(currentNickname)} &nbsp;·&nbsp; Tiebreaker: <strong>${_successTiebreaker} three-pointers</strong></div>
+  <h1>Future Badgers Bracket Challenge</h1>
+  <div class="meta"><strong>${typeLabel}:</strong> ${esc(currentNickname)} &nbsp;·&nbsp; Tiebreaker: <strong>${_successTiebreaker} three-pointers</strong></div>
 </div>
 <div class="content">
   ${roundsHTML}
@@ -1245,7 +1238,7 @@ window.renderBracket = function () {
   _origRenderBracket();
   const made = userPicks.filter(p => p !== null).length;
   const hint = document.getElementById('lock-hint');
-  if (hint) hint.textContent = made === 63 ? 'All picks done! Fill in your tiebreaker and lock it in 🎉' : `${made} / 63 picks made`;
+  if (hint) hint.textContent = made === 63 ? 'All picks done! Fill in your tiebreaker and lock it in.' : `${made} / 63 picks made`;
 };
 </script>
 </body>
