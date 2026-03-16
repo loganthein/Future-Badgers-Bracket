@@ -703,14 +703,36 @@ body {
 }
 .lb-main:hover { background: var(--offwhite); }
 
-.lb-rank        { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.3rem; min-width: 2.2rem; }
-.lb-type-emoji  { margin-right: .25rem; font-size: .95rem; }
-.lb-name        { font-weight: 800; font-size: 1rem; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lb-champion    { font-size: .82rem; color: var(--muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.lb-tiebreaker  { font-size: .78rem; color: var(--muted); font-weight: 700; white-space: nowrap; }
-.tb-diff        { font-size: .7rem; font-weight: 600; color: #856404; }
-.lb-score       { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.2rem; color: var(--red); white-space: nowrap; }
-.lb-expand      { color: var(--muted); font-size: .85rem; margin-left: .15rem; transition: transform .2s; flex-shrink: 0; }
+/* Column header row */
+.lb-col-labels {
+  display: flex;
+  align-items: center;
+  padding: 0 1rem .4rem;
+  gap: .5rem;
+  font-size: .68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted);
+}
+.lb-col-rank  { min-width: 2.2rem; flex-shrink: 0; }
+.lb-col-name  { flex: 1; min-width: 0; }
+.lb-col-pts   { width: 3rem; text-align: right; flex-shrink: 0; }
+.lb-col-max   { width: 3.5rem; text-align: right; flex-shrink: 0; }
+.lb-col-tb    { width: 5.5rem; text-align: center; flex-shrink: 0; }
+.lb-col-champ { width: 5.5rem; flex-shrink: 0; }
+.lb-col-exp   { width: 1.1rem; flex-shrink: 0; }
+
+/* Row columns */
+.lb-rank       { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.1rem; min-width: 2.2rem; flex-shrink: 0; }
+.lb-name       { font-weight: 800; font-size: 1rem; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-pts        { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.15rem; color: var(--red); white-space: nowrap; width: 3rem; text-align: right; flex-shrink: 0; }
+.lb-max        { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: .9rem; color: var(--muted); white-space: nowrap; width: 3.5rem; text-align: right; flex-shrink: 0; }
+.lb-tiebreaker { font-size: .78rem; color: var(--muted); font-weight: 700; white-space: nowrap; width: 5.5rem; text-align: center; flex-shrink: 0; }
+.lb-champion   { font-size: .82rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 5.5rem; flex-shrink: 0; }
+.tb-lock       { font-size: .9rem; opacity: .45; }
+.tb-diff       { font-size: .7rem; font-weight: 600; color: #856404; }
+.lb-expand     { color: var(--muted); font-size: .85rem; margin-left: .15rem; transition: transform .2s; flex-shrink: 0; }
 
 .lb-detail {
   border-top: 1.5px solid var(--border);

@@ -14,10 +14,6 @@ const TYPE_LABEL = {
   future_badger: 'Future Badger',
 };
 
-function _typeEmoji(type) {
-  return TYPE_LABEL[type] || '';
-}
-
 // ── Tab switching ──────────────────────────────────────────
 
 function setLbTab(tab) {
@@ -50,20 +46,23 @@ async function _refreshLeaderboard() {
     return;
   }
 
-  // Temporarily set bracketData so buildResultsArray() and scorePicksAgainstResults() work
+  // Temporarily set bracketData so buildResultsArray() works
   const prevBD = bracketData;
   bracketData  = bdata;
   const results = buildResultsArray();
   bracketData  = prevBD;
 
+  const eliminated = _buildEliminatedSet(results, bdata);
+
   const entries = Object.entries(allPicks).map(([nickname, data]) => {
     const picks = data.picks || [];
     return {
       nickname,
-      type:       data.type       ?? null,
-      tiebreaker: data.tiebreaker ?? null,
-      score:      scorePicksAgainstResults(picks, results),
-      champion:   picks[62] || '—',
+      type:         data.type       ?? null,
+      tiebreaker:   data.tiebreaker ?? null,
+      score:        scorePicksAgainstResults(picks, results),
+      maxAvailable: _calcMaxAvailable(picks, results, eliminated),
+      champion:     picks[62] || '—',
       picks,
       submittedAt: data.submittedAt,
     };
@@ -76,6 +75,77 @@ async function _refreshLeaderboard() {
   _renderAwards(entries, results, bdata);
   _renderEntries(entries, results, bdata);
   document.getElementById('lb-updated').textContent = `Updated ${new Date().toLocaleTimeString()}`;
+}
+
+// ── Max Available calculation ──────────────────────────────
+
+// Returns the two actual teams that play/played in a given game slot.
+function _getGameParticipants(gameIdx, results, bdata) {
+  const round = getRoundFromIndex(gameIdx);
+
+  if (round === 0) {
+    const offset      = gameIdx;                         // ROUND_OFFSETS[0] = 0
+    const regionIdx   = Math.floor(offset / GAMES_PER_REGION[0]);
+    const gameInReg   = offset % GAMES_PER_REGION[0];
+    const region      = REGIONS[regionIdx];
+    const [s1, s2]    = SEED_PAIRS[gameInReg];
+    const teams       = (bdata?.teams?.[region]) || [];
+    return [
+      teams.find(t => t.seed === s1)?.name || null,
+      teams.find(t => t.seed === s2)?.name || null,
+    ];
+  }
+
+  if (round <= 3) {
+    const offset    = gameIdx - ROUND_OFFSETS[round];
+    const regionIdx = Math.floor(offset / GAMES_PER_REGION[round]);
+    const gameInReg = offset % GAMES_PER_REGION[round];
+    const f1 = getGameIndex(round - 1, regionIdx, gameInReg * 2);
+    const f2 = getGameIndex(round - 1, regionIdx, gameInReg * 2 + 1);
+    return [results[f1] || null, results[f2] || null];
+  }
+
+  if (round === 4) {
+    // FF: game 0 = East(0) vs South(2), game 1 = West(1) vs Midwest(3)
+    const game    = gameIdx - 60;
+    const regions = [[0, 2], [1, 3]][game];
+    return [
+      results[getGameIndex(3, regions[0], 0)] || null,
+      results[getGameIndex(3, regions[1], 0)] || null,
+    ];
+  }
+
+  // Championship (62)
+  return [results[60] || null, results[61] || null];
+}
+
+// Builds a Set of team names that have already been eliminated.
+function _buildEliminatedSet(results, bdata) {
+  const eliminated = new Set();
+  for (let i = 0; i < 63; i++) {
+    if (!results[i]) continue;
+    const [t1, t2] = _getGameParticipants(i, results, bdata);
+    if (t1 && t1 !== results[i]) eliminated.add(t1);
+    if (t2 && t2 !== results[i]) eliminated.add(t2);
+  }
+  return eliminated;
+}
+
+// Returns current score + maximum points still available for this bracket.
+function _calcMaxAvailable(picks, results, eliminated) {
+  let max = 0;
+  for (let i = 0; i < 63; i++) {
+    if (!picks[i]) continue;
+    const pts = ROUND_POINTS[getRoundFromIndex(i)];
+    if (results[i] !== null && results[i] !== undefined) {
+      // Game already decided — only score if correct
+      if (picks[i] === results[i]) max += pts;
+    } else {
+      // Game not yet played — score if team is still alive
+      if (!eliminated.has(picks[i])) max += pts;
+    }
+  }
+  return max;
 }
 
 // ── Render entries for the active tab ──────────────────────
@@ -94,34 +164,48 @@ function _renderEntries(allEntries, results, bdata) {
     return;
   }
 
-  // Sort: score desc, then tiebreaker (if wisconsin_threes is set), then alpha
+  // Sort: score desc → maxAvailable desc → tiebreaker → alpha
   const wisThrees = (bdata?.wisconsin_threes != null) ? bdata.wisconsin_threes : null;
   entries = _sortEntries(entries, wisThrees);
 
   const tbActive = wisThrees != null;
 
-  // Show/hide tiebreaker note
+  // Tiebreaker note
   const tbNote = document.getElementById('lb-tb-note');
   if (tbNote) {
-    tbNote.style.display = tbActive ? 'block' : 'none';
     tbNote.textContent   = tbActive
       ? `Tiebreaker answer: ${wisThrees} three-pointers`
       : 'Tiebreaker: closest Wisconsin 3-point guess wins ties (answer TBD)';
-    tbNote.style.display = 'block'; // always show the note
+    tbNote.style.display = 'block';
   }
 
   const picksVisible = _picksVisible();
 
-  let html = '';
+  // Column header row
+  let html = `
+    <div class="lb-col-labels">
+      <span class="lb-col-rank"></span>
+      <span class="lb-col-name">Name</span>
+      <span class="lb-col-pts">Pts</span>
+      <span class="lb-col-max lb-hide-sm">Max</span>
+      <span class="lb-col-tb lb-hide-sm">Tiebreaker</span>
+      <span class="lb-col-champ lb-hide-sm">Champion</span>
+      <span class="lb-col-exp"></span>
+    </div>`;
+
   entries.forEach((entry, i) => {
     const rank   = i + 1;
-    const medal  = `#${rank}`;
-    // type label intentionally not shown next to name in rows
     const safeId = `lbrow-${i}`;
 
-    // Tiebreaker display
-    let tbDisplay = '—';
-    if (entry.tiebreaker != null) {
+    // Points
+    const ptsDisplay = picksVisible ? String(entry.score) : '—';
+
+    // Max Available
+    const maxDisplay = picksVisible ? String(entry.maxAvailable) : '—';
+
+    // Tiebreaker
+    let tbDisplay = picksVisible ? '—' : '<span class="tb-lock">&#128274;</span>';
+    if (picksVisible && entry.tiebreaker != null) {
       tbDisplay = String(entry.tiebreaker);
       if (tbActive) {
         const diff = Math.abs(entry.tiebreaker - wisThrees);
@@ -129,24 +213,26 @@ function _renderEntries(allEntries, results, bdata) {
       }
     }
 
-    const scoreDisplay = picksVisible ? `${entry.score} pts` : '—';
+    // Champion
     const champLogoHtml = picksVisible && entry.champion && entry.champion !== '—'
       ? _champLogoImg(entry.champion, 16) : '';
-    const championDisplay = picksVisible ? `${champLogoHtml}${_escLb(entry.champion)}` : 'Hidden';
+    const championDisplay = picksVisible ? `${champLogoHtml}${_escLb(entry.champion)}` : '—';
+
     const detailContent = picksVisible
       ? _buildPicksDetail(entry.picks, results, bdata)
       : '<div class="picks-locked">Picks are revealed when the tournament begins — check back Thursday at 11am!</div>';
     const clickHandler = picksVisible ? `onclick="toggleLbDetail('${safeId}')"` : '';
-    const expandArrow  = picksVisible ? '<span class="lb-expand">▼</span>' : '';
+    const expandArrow  = picksVisible ? '<span class="lb-expand">&#9660;</span>' : '';
 
     html += `
       <div class="lb-row" id="${safeId}">
         <div class="lb-main" ${clickHandler}>
-          <span class="lb-rank">${medal}</span>
+          <span class="lb-rank">#${rank}</span>
           <span class="lb-name">${_escLb(entry.nickname)}</span>
-          <span class="lb-champion lb-hide-sm">${championDisplay}</span>
+          <span class="lb-pts">${ptsDisplay}</span>
+          <span class="lb-max lb-hide-sm">${maxDisplay}</span>
           <span class="lb-tiebreaker lb-hide-sm">${tbDisplay}</span>
-          <span class="lb-score">${scoreDisplay}</span>
+          <span class="lb-champion lb-hide-sm">${championDisplay}</span>
           ${expandArrow}
         </div>
         <div class="lb-detail" id="detail-${safeId}" style="display:none">
@@ -162,7 +248,10 @@ function _sortEntries(entries, wisThrees) {
   return [...entries].sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
 
-    // Tiebreaker only applies when wisconsin_threes is known
+    // Max available (desc) as second sort key
+    if (b.maxAvailable !== a.maxAvailable) return b.maxAvailable - a.maxAvailable;
+
+    // Tiebreaker — only when wisconsin_threes is known
     if (wisThrees != null) {
       const aHas = a.tiebreaker != null;
       const bHas = b.tiebreaker != null;
@@ -170,7 +259,7 @@ function _sortEntries(entries, wisThrees) {
         const aDiff = Math.abs(a.tiebreaker - wisThrees);
         const bDiff = Math.abs(b.tiebreaker - wisThrees);
         if (aDiff !== bDiff) return aDiff - bDiff;
-      } else if (bHas) return 1;
+      } else if (bHas) return  1;
       else if (aHas)   return -1;
     }
 
@@ -207,27 +296,23 @@ function _renderAwards(allEntries, results, bdata) {
   const el = document.getElementById('awards-section');
   if (!el) return;
 
-  // Hide entirely if nobody has submitted yet
   if (allEntries.length === 0) { el.style.display = 'none'; return; }
 
   const visible   = _picksVisible();
   const wisThrees = (bdata?.wisconsin_threes != null) ? bdata.wisconsin_threes : null;
-  // Tournament is "over" when a champion result has been recorded (index 62)
   const crowned   = visible && !!results[62];
 
-  // Find top scorer(s) in a filtered set — returns array to handle ties
   function topOf(entries) {
     if (!entries.length) return [];
     const sorted = _sortEntries(entries, wisThrees);
     const best   = sorted[0].score;
-    // Before reveal, score is 0 for everyone — don't treat that as a real tie
     if (!visible) return [];
     return sorted.filter(e => e.score === best);
   }
 
-  const overall  = topOf(allEntries);
-  const alums    = topOf(allEntries.filter(e => e.type === 'badger'));
-  const futureB  = topOf(allEntries.filter(e => e.type === 'future_badger'));
+  const overall = topOf(allEntries);
+  const alums   = topOf(allEntries.filter(e => e.type === 'badger'));
+  const futureB = topOf(allEntries.filter(e => e.type === 'future_badger'));
 
   function winnerLine(winners) {
     if (!visible) return `<div class="award-winner tbd">Filling out brackets...</div>`;
@@ -245,7 +330,6 @@ function _renderAwards(allEntries, results, bdata) {
 
   function champLine(winners) {
     if (!visible || !winners.length) return '';
-    // Show champion pick only if all tied winners picked the same team (or just first)
     const pick = winners[0].champion;
     return pick && pick !== '—'
       ? `<div class="award-champ-pick">${_champLogoImg(pick, 16)}${_escLb(pick)}</div>`
@@ -254,9 +338,8 @@ function _renderAwards(allEntries, results, bdata) {
 
   function card(title, winners, isOverall) {
     const highlight = crowned && isOverall && winners.length > 0;
-    const confetti  = '';
     return `<div class="award-card${highlight ? ' crowned' : ''}">
-      <div class="award-title">${title}${confetti}</div>
+      <div class="award-title">${title}</div>
       ${winnerLine(winners)}
       ${metaLine(winners)}
       ${champLine(winners)}
@@ -264,9 +347,9 @@ function _renderAwards(allEntries, results, bdata) {
   }
 
   el.innerHTML = `<div class="awards-grid">
-    ${card('🏆 Overall Champion',  overall, true)}
-    ${card('Top Badger Alum',   alums,   false)}
-    ${card('Top Future Badger', futureB, false)}
+    ${card('🏆 Overall Champion', overall, true)}
+    ${card('Top Badger Alum',     alums,   false)}
+    ${card('Top Future Badger',   futureB, false)}
   </div>`;
   el.style.display = 'block';
 }
