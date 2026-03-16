@@ -266,6 +266,159 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
+/* ── Mobile bracket UI (shown only under 768px) ── */
+.mobile-region-tabs,
+.mobile-progress { display: none; }
+
+@media (max-width: 767px) {
+  /* Show mobile chrome, suppress desktop scroll */
+  .mobile-region-tabs { display: flex; }
+  .mobile-progress    { display: block; }
+  .bracket-scroll-wrapper { overflow-x: visible; padding: 0 0 1rem; }
+
+  /* Region tab strip */
+  .mobile-region-tabs {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .mobile-region-tabs::-webkit-scrollbar { display: none; }
+  .mrt-tab {
+    flex-shrink: 0;
+    padding: .65rem .9rem;
+    font-family: 'Nunito', sans-serif;
+    font-size: .9rem;
+    font-weight: 800;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+    white-space: nowrap;
+  }
+  .mrt-tab.active  { color: var(--red); border-bottom-color: var(--red); }
+  .mrt-tab.done:not(.active) { color: #28a745; }
+  .mrt-tab:disabled { color: #ccc; cursor: not-allowed; }
+
+  /* Progress bar */
+  .mobile-progress {
+    padding: .35rem 1rem;
+    background: var(--offwhite);
+    font-size: .8rem;
+    font-weight: 700;
+    color: var(--muted);
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .mobile-progress.all-done { color: #28a745; }
+
+  /* Region content */
+  .mobile-bracket-region { padding: .75rem .75rem 0; }
+  .mbr-region-label {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 1.15rem;
+    color: var(--text);
+    margin-bottom: .85rem;
+  }
+  .mbr-round { margin-bottom: 1.1rem; }
+  .mbr-round-label {
+    font-size: .72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--red);
+    margin-bottom: .45rem;
+    display: flex;
+    align-items: baseline;
+    gap: .4rem;
+  }
+  .mbr-round-pts { font-weight: 600; color: var(--muted); font-size: .68rem; }
+  .mbr-games { display: flex; flex-direction: column; gap: .45rem; }
+
+  /* Individual matchup card */
+  .mbr-matchup {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .mbr-team {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    width: 100%;
+    padding: .6rem .85rem;
+    background: none;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    font-family: 'Nunito', sans-serif;
+    font-size: .95rem;
+    font-weight: 700;
+    color: var(--text);
+    cursor: pointer;
+    transition: background .1s;
+  }
+  .mbr-team:last-child { border-bottom: none; }
+  .mbr-team:active:not([disabled]) { background: var(--offwhite); }
+  .mbr-team.picked  { background: rgba(197,5,12,.07); color: var(--red); }
+  .mbr-team.correct { background: #d4edda; color: #155724; }
+  .mbr-team.wrong   { background: #f8d7da; color: #721c24; text-decoration: line-through; }
+  .mbr-team.empty   { color: var(--muted); font-style: italic; cursor: default; }
+  .mbr-team[disabled] { cursor: default; }
+  .mbr-seed {
+    font-size: .7rem;
+    font-weight: 800;
+    background: var(--gray);
+    color: var(--muted);
+    border-radius: 3px;
+    padding: 1px 5px;
+    flex-shrink: 0;
+    min-width: 1.6rem;
+    text-align: center;
+  }
+  .mbr-team.picked .mbr-seed { background: rgba(197,5,12,.15); color: var(--red); }
+  .mbr-logo { border-radius: 2px; flex-shrink: 0; object-fit: contain; }
+  .mbr-name { flex: 1; }
+
+  /* Next region button bar */
+  .mbr-next-bar {
+    display: flex;
+    justify-content: center;
+    padding: .75rem 0 .5rem;
+  }
+  /* Locked state for Final Four tab */
+  .mbr-locked {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+    padding: 2rem;
+    text-align: center;
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  /* Slide transitions */
+  @keyframes _mbSlideRight {
+    from { opacity: 0; transform: translateX(28px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes _mbSlideLeft {
+    from { opacity: 0; transform: translateX(-28px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .mobile-bracket-region.slide-right { animation: _mbSlideRight .2s ease; }
+  .mobile-bracket-region.slide-left  { animation: _mbSlideLeft  .2s ease; }
+}
+
 /* ── Inner bracket layout ── */
 .bracket-inner {
   display: flex;
@@ -1109,6 +1262,16 @@ body {
   <div class="bracket-tip">
     Click or tap a team name to pick the winner — go all the way through the Championship!
   </div>
+
+  <!-- Mobile region tabs (hidden on desktop) -->
+  <div class="mobile-region-tabs" id="mobile-region-tabs">
+    <button class="mrt-tab active" data-region="0" onclick="setMobileRegion(0)">East</button>
+    <button class="mrt-tab"        data-region="1" onclick="setMobileRegion(1)">West</button>
+    <button class="mrt-tab"        data-region="2" onclick="setMobileRegion(2)">South</button>
+    <button class="mrt-tab"        data-region="3" onclick="setMobileRegion(3)">Midwest</button>
+    <button class="mrt-tab mrt-ff" data-region="4" onclick="setMobileRegion(4)" id="mrt-ff-tab" disabled>Final Four</button>
+  </div>
+  <div class="mobile-progress" id="mobile-progress">0 of 63 picks made</div>
 
   <div class="bracket-scroll-wrapper">
     <div id="bracket-scroll">

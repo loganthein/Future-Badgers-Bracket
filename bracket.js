@@ -18,6 +18,40 @@ const ROUND_NAMES  = ['Round of 64','Round of 32','Sweet 16','Elite 8','Final Fo
 const ROUND_OFFSETS    = [0, 32, 48, 56, 60, 62];
 const GAMES_PER_REGION = [8,  4,  2,  1];
 
+// ---- Mobile state ----
+let _mobileRegion        = 0;   // 0-3 = region, 4 = Final Four
+let _mobileSlideDir      = null; // 'right' | 'left' | null
+
+function _isMobile() { return window.innerWidth < 768; }
+
+function _isRegionDone(regionIdx) {
+  return userPicks[getGameIndex(3, regionIdx, 0)] !== null;
+}
+
+function _isFFUnlocked() {
+  return [0,1,2,3].every(_isRegionDone);
+}
+
+function setMobileRegion(idx) {
+  if (idx === 4 && !_isFFUnlocked()) return;
+  _mobileSlideDir = idx > _mobileRegion ? 'right' : 'left';
+  _mobileRegion   = idx;
+  if (_isMobile()) {
+    renderBracket();
+    document.querySelector('.bracket-scroll-wrapper')?.scrollTo(0, 0);
+  }
+  // Sync tab UI (active class)
+  document.querySelectorAll('.mrt-tab').forEach((t, i) =>
+    t.classList.toggle('active', i === idx)
+  );
+}
+
+function goNextMobileRegion() {
+  const next = _mobileRegion + 1;
+  if (next <= 3) setMobileRegion(next);
+  else if (_isFFUnlocked()) setMobileRegion(4);
+}
+
 // ---- State ----
 let bracketData     = null;
 let userPicks       = new Array(63).fill(null);
@@ -295,11 +329,146 @@ function _regionHTML(regionIdx, isRight, results) {
   </div>`;
 }
 
+// ============================================================
+// Mobile rendering
+// ============================================================
+
+function _mobileTeamBtn(rawName, idx, picked, actual, round) {
+  if (!rawName) return `<div class="mbr-team empty">TBD</div>`;
+  const locked = actual !== null;
+  let cls = 'mbr-team';
+  if (picked === rawName) cls += ' picked';
+  if (locked) {
+    if (rawName === actual)      cls += ' correct';
+    else if (picked === rawName) cls += ' wrong';
+  }
+  const info    = getTeamInfo(rawName);
+  const seed    = info ? `<span class="mbr-seed">${info.seed}</span>` : '';
+  const logoUrl = round === 0 ? getTeamLogoUrl(rawName) : null;
+  const logo    = logoUrl
+    ? `<img src="${logoUrl}" class="mbr-logo" width="20" height="20" alt="" onerror="this.style.display='none'">`
+    : '';
+  return `<button class="${cls}"
+    data-game="${idx}"
+    data-team="${rawName.replace(/"/g,'&quot;')}"
+    ${locked ? 'disabled' : ''}
+  >${seed}${logo}<span class="mbr-name">${_esc(rawName)}</span></button>`;
+}
+
+function _mobileMatchupHTML(round, regionIdx, gameInRegion, results) {
+  const idx    = round === 5 ? 62
+               : round === 4 ? 60 + gameInRegion
+               : getGameIndex(round, regionIdx, gameInRegion);
+  const [t1, t2] = getGameTeams(round, regionIdx, gameInRegion);
+  const picked   = userPicks[idx];
+  const actual   = results[idx];
+  return `<div class="mbr-matchup">
+    ${_mobileTeamBtn(t1, idx, picked, actual, round)}
+    ${_mobileTeamBtn(t2, idx, picked, actual, round)}
+  </div>`;
+}
+
+function _renderMobileRegion(regionIdx, results) {
+  const dir = _mobileSlideDir;
+  _mobileSlideDir = null;
+  const animCls = dir === 'right' ? 'slide-right' : dir === 'left' ? 'slide-left' : '';
+
+  let html = `<div class="mobile-bracket-region ${animCls}">`;
+  html += `<div class="mbr-region-label">${REGIONS[regionIdx]} Region</div>`;
+
+  for (let r = 0; r <= 3; r++) {
+    const numGames = GAMES_PER_REGION[r];
+    const pts      = ROUND_POINTS[r];
+    html += `<div class="mbr-round">
+      <div class="mbr-round-label">${ROUND_NAMES[r]} <span class="mbr-round-pts">${pts} pt${pts > 1 ? 's' : ''} each</span></div>
+      <div class="mbr-games">`;
+    for (let g = 0; g < numGames; g++) {
+      html += _mobileMatchupHTML(r, regionIdx, g, results);
+    }
+    html += '</div></div>';
+  }
+
+  const nextLabel = regionIdx < 3
+    ? `Next: ${REGIONS[regionIdx + 1]} →`
+    : _isFFUnlocked() ? 'Go to Final Four →' : 'Final Four (complete region first)';
+  html += `<div class="mbr-next-bar">
+    <button class="btn btn-${regionIdx < 3 || _isFFUnlocked() ? 'primary' : 'secondary'}"
+      onclick="goNextMobileRegion()">
+      ${nextLabel}
+    </button>
+  </div>`;
+  html += '</div>';
+  return html;
+}
+
+function _renderMobileFinalFour(results) {
+  const dir = _mobileSlideDir;
+  _mobileSlideDir = null;
+  const animCls = dir === 'right' ? 'slide-right' : dir === 'left' ? 'slide-left' : '';
+
+  if (!_isFFUnlocked()) {
+    return `<div class="mobile-bracket-region ${animCls}">
+      <div class="mbr-locked">Complete all 4 regions to unlock the Final Four!</div>
+    </div>`;
+  }
+
+  let html = `<div class="mobile-bracket-region ${animCls}">`;
+  html += `<div class="mbr-region-label">Final Four &amp; Championship</div>`;
+
+  html += `<div class="mbr-round">
+    <div class="mbr-round-label">Final Four <span class="mbr-round-pts">16 pts each</span></div>
+    <div class="mbr-games">
+      ${_mobileMatchupHTML(4, 0, 0, results)}
+      ${_mobileMatchupHTML(4, 0, 1, results)}
+    </div>
+  </div>`;
+
+  html += `<div class="mbr-round">
+    <div class="mbr-round-label">Championship <span class="mbr-round-pts">32 pts</span></div>
+    <div class="mbr-games">
+      ${_mobileMatchupHTML(5, 0, 0, results)}
+    </div>
+  </div>`;
+
+  html += '</div>';
+  return html;
+}
+
+function _updateMobileTabs(results) {
+  const ffUnlocked = _isFFUnlocked();
+  document.querySelectorAll('.mrt-tab').forEach((tab, i) => {
+    if (i < 4) {
+      tab.classList.toggle('done',   _isRegionDone(i));
+      tab.classList.toggle('active', i === _mobileRegion);
+    } else {
+      tab.disabled = !ffUnlocked;
+      tab.classList.toggle('active', _mobileRegion === 4);
+    }
+  });
+  const made   = userPicks.filter(p => p !== null).length;
+  const progEl = document.getElementById('mobile-progress');
+  if (progEl) {
+    progEl.textContent = made === 63 ? 'All 63 picks made!' : `${made} of 63 picks made`;
+    progEl.classList.toggle('all-done', made === 63);
+  }
+}
+
 function renderBracket() {
   const container = document.getElementById('bracket-scroll');
   if (!container || !bracketData) return;
 
   const results = buildResultsArray();
+
+  if (_isMobile()) {
+    container.innerHTML = _mobileRegion < 4
+      ? _renderMobileRegion(_mobileRegion, results)
+      : _renderMobileFinalFour(results);
+    container.querySelectorAll('.mbr-team:not(.empty):not([disabled])').forEach(btn => {
+      btn.addEventListener('click', () => pickWinner(parseInt(btn.dataset.game), btn.dataset.team));
+    });
+    _updateMobileTabs(results);
+    return;
+  }
 
   // NCAA layout: East(0)+South(2) on left, West(1)+Midwest(3) on right.
   // FF game 0 = East vs South (left FF), FF game 1 = West vs Midwest (right FF).
@@ -350,9 +519,11 @@ function updateLockButton() {
 // ============================================================
 
 async function initBracket(nickname, type) {
-  currentNickname = nickname;
-  currentUserType = type;
-  userPicks       = new Array(63).fill(null);
+  currentNickname  = nickname;
+  currentUserType  = type;
+  userPicks        = new Array(63).fill(null);
+  _mobileRegion    = 0;
+  _mobileSlideDir  = null;
 
   // Reset tiebreaker input
   const tbInput = document.getElementById('tiebreaker-input');
@@ -458,6 +629,15 @@ async function lockBracket() {
     }
   }
 }
+
+// Re-render on resize so mobile/desktop switch is seamless
+let _resizeTimer = null;
+window.addEventListener('resize', function () {
+  clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(function () {
+    if (bracketData) renderBracket();
+  }, 200);
+});
 
 // ============================================================
 // Scoring helper (used by leaderboard)
