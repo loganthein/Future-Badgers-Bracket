@@ -1,0 +1,29 @@
+name: Update Tournament Results
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'   # every 5 minutes
+  workflow_dispatch:          # allow manual trigger for testing
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    # Date guard is also enforced inside the script, but skip the job entirely
+    # outside the tournament window to save Actions minutes.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install node-fetch
+
+      - name: Fetch and update results
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+        run: node scripts/update-results.js
+        # continue-on-error ensures a transient ESPN or Gist API failure
+        # won't block the next scheduled run from attempting again.
+        continue-on-error: true
