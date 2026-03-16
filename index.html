@@ -834,14 +834,14 @@ body {
 <body>
 
 <!-- ══════════════════════════════════════════
-     PAGE 0: ADMIN SETUP (shown if no workflow_token in localStorage)
+     PAGE 0: ADMIN SETUP (shown if no gist_token in localStorage)
 ══════════════════════════════════════════ -->
 <div id="page-admin-setup" class="page">
   <div class="admin-card">
     <h2>Admin Setup</h2>
-    <p>Enter your GitHub personal access token (with <code>workflow</code> scope) to enable bracket submission.<br>
+    <p>Enter your GitHub Gist token to enable bracket saving and loading.<br>
        This is stored only in your browser — never in the code.</p>
-    <label for="admin-token-input">Enter Workflow Token</label>
+    <label for="admin-token-input">Enter Gist Token</label>
     <input
       type="password"
       id="admin-token-input"
@@ -898,7 +898,7 @@ body {
       </button>
     </div>
 
-    <span class="reset-token-link" onclick="resetAdminToken()">Reset Workflow Token</span>
+    <span class="reset-token-link" onclick="resetAdminToken()">Reset Gist Token</span>
 
     <div class="rules">
       <h3>How Points Work</h3>
@@ -1059,20 +1059,20 @@ function saveAdminToken() {
     input?.focus();
     return;
   }
-  localStorage.setItem('workflow_token', token);
+  localStorage.setItem('gist_token', token);
   location.reload();
 }
 
 function resetAdminToken() {
-  if (confirm('Clear your saved workflow token? The admin setup screen will appear on next load.')) {
-    localStorage.removeItem('workflow_token');
+  if (confirm('Clear your saved Gist token? The admin setup screen will appear on next load.')) {
+    localStorage.removeItem('gist_token');
     location.reload();
   }
 }
 
 // Check for token on load — show admin setup if missing
 (function checkToken() {
-  if (!localStorage.getItem('workflow_token')) {
+  if (!localStorage.getItem('gist_token')) {
     document.getElementById('page-admin-setup').classList.add('active');
     document.getElementById('admin-token-input')?.addEventListener('keydown', e => {
       if (e.key === 'Enter') saveAdminToken();
