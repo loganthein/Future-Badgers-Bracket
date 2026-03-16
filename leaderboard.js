@@ -73,6 +73,7 @@ async function _refreshLeaderboard() {
   _cachedResults = results;
   _cachedBdata   = bdata;
 
+  _renderAwards(entries, results, bdata);
   _renderEntries(entries, results, bdata);
   document.getElementById('lb-updated').textContent = `Updated ${new Date().toLocaleTimeString()}`;
 }
@@ -190,6 +191,80 @@ function toggleLbDetail(rowId) {
   const open = el.style.display !== 'none';
   el.style.display = open ? 'none' : 'block';
   row?.querySelector('.lb-expand')?.setAttribute('style', open ? '' : 'transform:rotate(180deg)');
+}
+
+// ── Awards section ──────────────────────────────────────────
+
+function _renderAwards(allEntries, results, bdata) {
+  const el = document.getElementById('awards-section');
+  if (!el) return;
+
+  // Hide entirely if nobody has submitted yet
+  if (allEntries.length === 0) { el.style.display = 'none'; return; }
+
+  const visible   = _picksVisible();
+  const wisThrees = (bdata?.wisconsin_threes != null) ? bdata.wisconsin_threes : null;
+  // Tournament is "over" when a champion result has been recorded (index 62)
+  const crowned   = visible && !!results[62];
+
+  // Find top scorer(s) in a filtered set — returns array to handle ties
+  function topOf(entries) {
+    if (!entries.length) return [];
+    const sorted = _sortEntries(entries, wisThrees);
+    const best   = sorted[0].score;
+    // Before reveal, score is 0 for everyone — don't treat that as a real tie
+    if (!visible) return [];
+    return sorted.filter(e => e.score === best);
+  }
+
+  const overall  = topOf(allEntries);
+  const alums    = topOf(allEntries.filter(e => e.type === 'badger'));
+  const futureB  = topOf(allEntries.filter(e => e.type === 'future_badger'));
+
+  function winnerLine(winners) {
+    if (!visible) return `<div class="award-winner tbd">Filling out brackets… 🦡</div>`;
+    if (!winners.length) return `<div class="award-winner tbd">No entries yet</div>`;
+    return winners.map(w =>
+      `<div class="award-winner">${_typeEmojiAward(w.type)} ${_escLb(w.nickname)}</div>`
+    ).join('');
+  }
+
+  function metaLine(winners) {
+    if (!visible || !winners.length) return '';
+    const pts = winners[0].score;
+    return `<div class="award-meta">${pts} pts</div>`;
+  }
+
+  function champLine(winners) {
+    if (!visible || !winners.length) return '';
+    // Show champion pick only if all tied winners picked the same team (or just first)
+    const pick = winners[0].champion;
+    return pick && pick !== '—'
+      ? `<div class="award-champ-pick">🏆 picked: ${_escLb(pick)}</div>`
+      : '';
+  }
+
+  function card(title, winners, isOverall) {
+    const highlight = crowned && isOverall && winners.length > 0;
+    const confetti  = highlight ? ' 🎉' : '';
+    return `<div class="award-card${highlight ? ' crowned' : ''}">
+      <div class="award-title">${title}${confetti}</div>
+      ${winnerLine(winners)}
+      ${metaLine(winners)}
+      ${champLine(winners)}
+    </div>`;
+  }
+
+  el.innerHTML = `<div class="awards-grid">
+    ${card('🏆 Overall Champion',    overall, true)}
+    ${card('🏆 Top Badger Alum',     alums,   false)}
+    ${card('🏆 Top Future Badger',   futureB, false)}
+  </div>`;
+  el.style.display = 'block';
+}
+
+function _typeEmojiAward(type) {
+  return type === 'badger' ? '👴👵' : type === 'future_badger' ? '👦👧' : '🦡';
 }
 
 function _buildPicksDetail(picks, results, bdata) {
