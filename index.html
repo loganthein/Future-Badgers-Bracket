@@ -6,7 +6,7 @@
 <title>🦡 Future Badgers Bracket Challenge</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
 /* ── Base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -44,7 +44,7 @@ body {
   gap: 1rem;
   box-shadow: 0 2px 8px rgba(0,0,0,.25);
 }
-.site-header .logo { font-family: 'Fredoka One', cursive; font-size: 1.6rem; }
+.site-header .logo { font-family: 'Nunito', sans-serif; font-size: 1.6rem; font-weight: 800; }
 .header-w-logo { height: 40px; width: auto; filter: brightness(0) invert(1); }
 
 /* ── Hero images ── */
@@ -91,7 +91,8 @@ body {
   text-align: center;
 }
 .hero-banner h1 {
-  font-family: 'Fredoka One', cursive;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
   font-size: clamp(1.8rem, 5vw, 3rem);
   line-height: 1.2;
   margin-bottom: .5rem;
@@ -165,7 +166,8 @@ body {
   text-align: center;
 }
 .type-select-body h2 {
-  font-family: 'Fredoka One', cursive;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
   font-size: 2rem;
   color: var(--red);
   margin-bottom: .4rem;
@@ -208,7 +210,8 @@ body {
 .type-card:active { transform: scale(.97); }
 .type-card .tc-emoji { font-size: 3.2rem; line-height: 1.1; letter-spacing: .1em; }
 .type-card .tc-title {
-  font-family: 'Fredoka One', cursive;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
   font-size: 1.3rem;
   color: var(--text);
 }
@@ -239,8 +242,8 @@ body {
   flex-wrap: wrap;
   gap: .5rem;
 }
-.bracket-header h2 { font-family: 'Fredoka One', cursive; font-size: 1.3rem; }
-#bracket-player-name { font-family: 'Fredoka One', cursive; font-size: 1.1rem; opacity: .9; }
+.bracket-header h2 { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.3rem; }
+#bracket-player-name { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 1.1rem; opacity: .9; }
 
 .bracket-tip {
   background: #fff3cd;
@@ -275,7 +278,8 @@ body {
 
 .region-block { display: flex; flex-direction: column; }
 .region-label {
-  font-family: 'Fredoka One', cursive;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
   font-size: .75rem;
   letter-spacing: .05em;
   padding: .15rem .4rem;
@@ -423,7 +427,8 @@ body {
 }
 .center-label {
   flex-shrink: 0;
-  font-family: 'Fredoka One', cursive;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
   font-size: 1rem;
   color: var(--red);
   text-align: center;
@@ -434,7 +439,7 @@ body {
 .ff-slot      { width: 100%; }
 /* Championship sits between the two FF rows at natural height */
 .champ-row    { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: .4rem; padding: .75rem 0; }
-.champ-label  { font-family: 'Fredoka One', cursive; font-size: .95rem; color: var(--red); }
+.champ-label  { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: .95rem; color: var(--red); }
 .champ-slot   { width: 100%; }
 .ff-slot .team-slot, .champ-slot .team-slot { font-size: .8rem; min-height: 30px; padding: 5px 8px; }
 
@@ -517,7 +522,7 @@ body {
   text-align: center;
 }
 .success-check { display: block; font-size: 3.5rem; line-height: 1; margin-bottom: .5rem; }
-.success-header h2 { font-family: 'Fredoka One', cursive; font-size: 2rem; margin-bottom: .4rem; }
+.success-header h2 { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 2rem; margin-bottom: .4rem; }
 .success-header p  { font-size: .95rem; opacity: .9; font-weight: 600; }
 
 .success-body {
@@ -558,7 +563,7 @@ body {
   flex-wrap: wrap;
   gap: .5rem;
 }
-.lb-header h2 { font-family: 'Fredoka One', cursive; font-size: 1.5rem; }
+.lb-header h2 { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.5rem; }
 #lb-updated   { font-size: .8rem; opacity: .8; }
 
 /* Awards section */
@@ -597,7 +602,8 @@ body {
   color: var(--red);
 }
 .award-winner {
-  font-family: 'Fredoka One', cursive;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 700;
   font-size: 1.15rem;
   color: var(--text);
   line-height: 1.2;
@@ -693,13 +699,13 @@ body {
 }
 .lb-main:hover { background: #fff8f8; }
 
-.lb-rank        { font-family: 'Fredoka One', cursive; font-size: 1.3rem; min-width: 2.2rem; }
+.lb-rank        { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.3rem; min-width: 2.2rem; }
 .lb-type-emoji  { margin-right: .25rem; font-size: .95rem; }
 .lb-name        { font-weight: 800; font-size: 1rem; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lb-champion    { font-size: .82rem; color: var(--muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lb-tiebreaker  { font-size: .78rem; color: var(--muted); font-weight: 700; white-space: nowrap; }
 .tb-diff        { font-size: .7rem; font-weight: 600; color: #856404; }
-.lb-score       { font-family: 'Fredoka One', cursive; font-size: 1.2rem; color: var(--red); white-space: nowrap; }
+.lb-score       { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.2rem; color: var(--red); white-space: nowrap; }
 .lb-expand      { color: var(--muted); font-size: .85rem; margin-left: .15rem; transition: transform .2s; flex-shrink: 0; }
 
 .lb-detail {
@@ -757,7 +763,8 @@ body {
   text-align: center;
 }
 .admin-card h2 {
-  font-family: 'Fredoka One', cursive;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
   font-size: 1.8rem;
   color: var(--red);
   margin-bottom: .35rem;
@@ -860,7 +867,8 @@ body {
          alt="Wisconsin W" class="hero-w-logo">
     <h1>Future Badgers<br>Bracket Challenge!</h1>
     <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Bucky_Badger.svg/200px-Bucky_Badger.svg.png"
-         alt="Bucky Badger" class="hero-bucky">
+         alt="Bucky Badger" class="hero-bucky"
+         onerror="this.src='https://uwbadgers.com/images/logos/site/site.png';this.onerror=function(){this.style.display='none'};">
     <p>Pick your winners and climb the leaderboard! 🏀</p>
   </div>
 
