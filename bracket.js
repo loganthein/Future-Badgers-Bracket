@@ -237,14 +237,18 @@ function _matchupHTML(round, regionIdx, gameInRegion, results) {
 function _roundColHTML(round, regionIdx, numGames, results) {
   // Group every two consecutive matchups into a .game-pair so connector
   // lines (drawn via CSS ::before/::after) can span between them.
-  let inner = '';
+  const ROUND_SHORT = ['R64', 'R32', 'S16', 'E8'];
+  let pairs = '';
   for (let g = 0; g < numGames; g += 2) {
-    inner += '<div class="game-pair">';
-    inner += _matchupHTML(round, regionIdx, g, results);
-    if (g + 1 < numGames) inner += _matchupHTML(round, regionIdx, g + 1, results);
-    inner += '</div>';
+    pairs += '<div class="game-pair">';
+    pairs += _matchupHTML(round, regionIdx, g, results);
+    if (g + 1 < numGames) pairs += _matchupHTML(round, regionIdx, g + 1, results);
+    pairs += '</div>';
   }
-  return `<div class="round-col" data-round="${round}">${inner}</div>`;
+  return `<div class="round-col" data-round="${round}">` +
+    `<div class="rcol-label">${ROUND_SHORT[round] || ''}</div>` +
+    `<div class="rcol-games">${pairs}</div>` +
+    `</div>`;
 }
 
 function _regionHTML(regionIdx, isRight, results) {

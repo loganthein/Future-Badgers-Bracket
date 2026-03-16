@@ -387,33 +387,48 @@ body {
 .bracket-center {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   width: 180px;
   min-width: 180px;
-  padding: .5rem .4rem;
+  padding: 0 .4rem;
   background: #fff5f5;
   border-left: 2px solid #f0c0c0;
   border-right: 2px solid #f0c0c0;
 }
-.center-label { font-family: 'Fredoka One', cursive; font-size: 1rem; color: var(--red); text-align: center; padding: .4rem 0; }
+.center-label {
+  flex-shrink: 0;
+  font-family: 'Fredoka One', cursive;
+  font-size: 1rem;
+  color: var(--red);
+  text-align: center;
+  padding: .4rem 0;
+}
+/* Each FF row takes equal share of remaining height, matchup centered within */
 .ff-row       { flex: 1; display: flex; align-items: center; justify-content: center; }
 .ff-slot      { width: 100%; }
-.champ-row    { display: flex; flex-direction: column; align-items: center; gap: .4rem; padding: .75rem 0; }
+/* Championship sits between the two FF rows at natural height */
+.champ-row    { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: .4rem; padding: .75rem 0; }
 .champ-label  { font-family: 'Fredoka One', cursive; font-size: .95rem; color: var(--red); }
 .champ-slot   { width: 100%; }
 .ff-slot .team-slot, .champ-slot .team-slot { font-size: .8rem; min-height: 30px; padding: 5px 8px; }
 
-/* Round name labels via CSS attr */
-.round-col::before {
-  content: attr(data-round-name);
-  display: block;
+/* Round name labels — actual DOM elements, not pseudo-elements (pseudo-elements consume
+   flex height from .round-col and break the top:25%/height:50% connector math) */
+.rcol-label {
+  height: 16px;
+  flex-shrink: 0;
   font-size: .62rem;
   font-weight: 800;
   color: var(--muted);
   text-align: center;
-  padding-bottom: 2px;
+  line-height: 16px;
   text-transform: uppercase;
   letter-spacing: .04em;
+}
+.rcol-games {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
 }
 
 /* ── Lock bar (sticky bottom) ── */
@@ -964,16 +979,11 @@ document.getElementById('nickname-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') handleContinue();
 });
 
-// ── Add round labels to bracket columns after render ─────
+// ── Update picks counter after each render ─────────────
 
-const ROUND_SHORT = ['R64','R32','S16','E8','FF','Champ'];
 const _origRenderBracket = renderBracket;
 window.renderBracket = function () {
   _origRenderBracket();
-  document.querySelectorAll('.round-col[data-round]').forEach(col => {
-    const r = parseInt(col.dataset.round);
-    col.dataset.roundName = ROUND_SHORT[r] || '';
-  });
   const made = userPicks.filter(p => p !== null).length;
   const hint = document.getElementById('lock-hint');
   if (hint) hint.textContent = made === 63 ? 'All picks done! Fill in your tiebreaker and lock it in 🎉' : `${made} / 63 picks made`;
