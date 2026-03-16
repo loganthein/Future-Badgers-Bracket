@@ -487,6 +487,44 @@ body {
 .lock-bar .hint { font-size: .85rem; color: var(--muted); margin-top: .4rem; }
 
 /* ═══════════════════════════════════════════════════
+   PAGE 3b — SUCCESS / CONFIRMATION
+═══════════════════════════════════════════════════ */
+.success-header {
+  background: var(--red);
+  color: var(--white);
+  padding: 2.25rem 1.25rem 1.75rem;
+  text-align: center;
+}
+.success-check { display: block; font-size: 3.5rem; line-height: 1; margin-bottom: .5rem; }
+.success-header h2 { font-family: 'Fredoka One', cursive; font-size: 2rem; margin-bottom: .4rem; }
+.success-header p  { font-size: .95rem; opacity: .9; font-weight: 600; }
+
+.success-body {
+  max-width: 480px;
+  margin: 1.5rem auto;
+  padding: 0 1rem;
+  text-align: center;
+}
+.success-champ {
+  display: inline-block;
+  background: #fff5f5;
+  border: 2px solid #f0c0c0;
+  border-radius: 12px;
+  padding: .7rem 1.4rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 1rem;
+}
+.success-actions {
+  display: flex;
+  gap: .85rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 1.25rem;
+}
+
+/* ═══════════════════════════════════════════════════
    PAGE 4 — LEADERBOARD
 ═══════════════════════════════════════════════════ */
 .lb-header {
@@ -909,6 +947,24 @@ body {
 </div>
 
 <!-- ══════════════════════════════════════════
+     PAGE 3b: SUCCESS / CONFIRMATION
+══════════════════════════════════════════ -->
+<div id="page-success" class="page">
+  <div class="success-header">
+    <span class="success-check">🎉</span>
+    <h2>Bracket Locked In!</h2>
+    <p id="success-subtitle"></p>
+  </div>
+  <div class="success-body">
+    <div id="success-champ"></div>
+    <div class="success-actions">
+      <button class="btn btn-secondary" onclick="printBracket()">🖨️ Print My Bracket</button>
+      <button class="btn btn-primary"   onclick="handleViewLeaderboard()">🏆 View Leaderboard</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
      PAGE 4: LEADERBOARD
 ══════════════════════════════════════════ -->
 <div id="page-leaderboard" class="page">
@@ -1031,6 +1087,101 @@ function selectType(type) {
     cards.forEach(c => c.disabled = false);
     if (loadingEl) loadingEl.style.display = 'none';
   });
+}
+
+// ── Success page ─────────────────────────────────────────
+
+let _successTiebreaker = null;
+
+function initSuccessPage(tbVal) {
+  _successTiebreaker = tbVal;
+  const typeEmoji = currentUserType === 'badger' ? '👴👵' : '👦👧';
+  const typeLabel = currentUserType === 'badger' ? 'Badger Alum' : 'Future Badger';
+  const sub = document.getElementById('success-subtitle');
+  if (sub) sub.textContent = `${typeEmoji} ${typeLabel} · ${currentNickname} · Tiebreaker: ${tbVal} 3-pointers`;
+
+  const champEl = document.getElementById('success-champ');
+  if (champEl) {
+    const champ = userPicks[62];
+    champEl.innerHTML = champ
+      ? `<div class="success-champ">Your champion pick: 🏆 <strong>${champ}</strong></div>`
+      : '';
+  }
+}
+
+function printBracket() {
+  const typeEmoji = currentUserType === 'badger' ? '👴👵' : '👦👧';
+  const typeLabel = currentUserType === 'badger' ? 'Badger Alum' : 'Future Badger';
+
+  function esc(s) {
+    return (s || '').replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  let roundsHTML = '';
+  for (let r = 5; r >= 0; r--) {
+    const start = ROUND_OFFSETS[r];
+    const end   = r === 5 ? 63 : r === 4 ? 62 : ROUND_OFFSETS[r] + 4 * GAMES_PER_REGION[r];
+
+    const chips = [];
+    for (let i = start; i < end; i++) {
+      const pick = userPicks[i];
+      if (!pick) continue;
+      const info = getTeamInfo(pick);
+      chips.push(`<div class="pick-chip">${info ? `<span class="seed">${info.seed}</span>` : ''}${esc(pick)}</div>`);
+    }
+    if (!chips.length) continue;
+
+    const pts = ROUND_POINTS[r];
+    roundsHTML += `<div class="round-section">
+      <div class="round-heading">
+        <span class="round-name">${esc(ROUND_NAMES[r])}</span>
+        <span class="round-pts">${pts} pt${pts > 1 ? 's' : ''} each</span>
+      </div>
+      <div class="picks-row">${chips.join('')}</div>
+    </div>`;
+  }
+
+  const html = `<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<title>Bracket – ${esc(currentNickname)}</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, Helvetica, sans-serif; color: #1a1a1a; background: #fff; font-size: 13px; }
+.header { background: #C5050C; color: #fff; padding: 14px 20px 12px; }
+.header h1 { font-size: 18px; font-weight: 900; letter-spacing: .01em; }
+.header .meta { font-size: 12px; margin-top: 5px; opacity: .92; }
+.header .meta strong { font-weight: 800; }
+.content { padding: 14px 20px; }
+.round-section { margin-bottom: 14px; }
+.round-heading { display: flex; align-items: baseline; gap: 8px; border-bottom: 2px solid #C5050C; padding-bottom: 3px; margin-bottom: 7px; }
+.round-name { font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; color: #C5050C; }
+.round-pts  { font-size: 10px; color: #888; }
+.picks-row  { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+.pick-chip  { display: flex; align-items: center; gap: 4px; background: #f4f4f4; border: 1px solid #ddd; border-radius: 4px; padding: 3px 8px; font-size: 12px; font-weight: 600; }
+.seed       { font-size: 10px; background: #ddd; border-radius: 3px; padding: 0 4px; font-weight: 700; flex-shrink: 0; }
+.footer     { border-top: 1px solid #eee; margin-top: 16px; padding-top: 6px; font-size: 10px; color: #aaa; }
+@media print {
+  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🦡 Future Badgers Bracket Challenge</h1>
+  <div class="meta">${typeEmoji} <strong>${typeLabel}:</strong> ${esc(currentNickname)} &nbsp;·&nbsp; Tiebreaker: <strong>${_successTiebreaker} three-pointers</strong></div>
+</div>
+<div class="content">
+  ${roundsHTML}
+  <div class="footer">Printed ${new Date().toLocaleDateString('en-US', {weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+</div>
+<script>window.onload = function () { window.print(); }<\/script>
+</body></html>`;
+
+  const w = window.open('', '_blank');
+  if (w) { w.document.write(html); w.document.close(); }
+  else    { alert('Pop-up blocked! Please allow pop-ups for this site to print.'); }
 }
 
 // ── Leaderboard shortcut ─────────────────────────────────
