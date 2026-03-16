@@ -17,13 +17,13 @@
   --red:      #C5050C;
   --red-dk:   #a0040a;
   --white:    #ffffff;
-  --offwhite: #fdf6f6;
-  --gray:     #e8e8e8;
-  --muted:    #888;
+  --offwhite: #f4f5f7;
+  --gray:     #eaecef;
+  --muted:    #6b7280;
   --green:    #2ecc71;
-  --text:     #1a1a1a;
-  --border:   #ddd;
-  --shadow:   0 2px 12px rgba(197,5,12,.15);
+  --text:     #111827;
+  --border:   #e2e5e9;
+  --shadow:   0 1px 3px rgba(0,0,0,.08), 0 4px 12px rgba(0,0,0,.06);
 }
 
 body {
@@ -60,23 +60,23 @@ body {
 .btn {
   display: inline-block;
   font-family: 'Nunito', sans-serif;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 800;
-  padding: .75rem 2rem;
-  border-radius: 50px;
+  padding: .6rem 1.5rem;
+  border-radius: 8px;
   border: none;
   cursor: pointer;
-  transition: transform .1s, box-shadow .1s;
+  transition: background .12s, color .12s, border-color .12s;
   text-decoration: none;
   user-select: none;
 }
-.btn:active { transform: scale(.97); }
-.btn-primary  { background: var(--red); color: var(--white); box-shadow: var(--shadow); }
-.btn-primary:hover  { background: var(--red-dk); box-shadow: 0 4px 18px rgba(197,5,12,.35); }
-.btn-secondary { background: var(--white); color: var(--red); border: 2.5px solid var(--red); }
-.btn-secondary:hover { background: #fff0f0; }
-.btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
-.btn-lg { font-size: 1.3rem; padding: 1rem 2.5rem; }
+.btn:active { opacity: .88; }
+.btn-primary  { background: var(--red); color: var(--white); }
+.btn-primary:hover  { background: var(--red-dk); }
+.btn-secondary { background: var(--white); color: var(--red); border: 2px solid var(--red); }
+.btn-secondary:hover { background: #fdf0f0; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-lg { font-size: 1.15rem; padding: .8rem 2rem; }
 
 /* ── Util ── */
 .loading    { padding: 2rem; text-align: center; font-size: 1.1rem; color: var(--muted); }
@@ -87,9 +87,9 @@ body {
    PAGE 1 — WELCOME
 ═══════════════════════════════════════════════════ */
 .hero-banner {
-  background: linear-gradient(135deg, var(--red) 55%, #8b0005 100%);
+  background: var(--red);
   color: var(--white);
-  padding: 3rem 1.5rem 4rem;
+  padding: 2.5rem 1.5rem 3.5rem;
   text-align: center;
 }
 .hero-banner h1 {
@@ -105,8 +105,9 @@ body {
   max-width: 480px;
   margin: -2rem auto 2rem;
   background: var(--white);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.12);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
   padding: 2rem 1.5rem;
 }
 
@@ -122,8 +123,8 @@ body {
   font-size: 1.3rem;
   font-weight: 700;
   padding: .75rem 1rem;
-  border: 2.5px solid var(--border);
-  border-radius: 12px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
   outline: none;
   transition: border-color .2s;
 }
@@ -131,13 +132,13 @@ body {
 
 .nickname-error {
   display: none;
-  background: #fff0f0;
-  border: 1.5px solid var(--red);
-  border-radius: 10px;
+  background: #fef2f2;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
   color: var(--red);
   font-weight: 700;
-  font-size: .9rem;
-  padding: .55rem .85rem;
+  font-size: .88rem;
+  padding: .5rem .85rem;
   margin-top: .5rem;
 }
 
@@ -150,8 +151,9 @@ body {
 
 .rules {
   margin-top: 1.5rem;
-  background: #fff8f8;
-  border-radius: 12px;
+  background: var(--offwhite);
+  border: 1px solid var(--border);
+  border-radius: 8px;
   padding: 1rem;
   font-size: .92rem;
 }
@@ -196,20 +198,19 @@ body {
   width: 200px;
   min-height: 180px;
   background: var(--white);
-  border: 3px solid var(--border);
-  border-radius: 20px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
   cursor: pointer;
-  transition: border-color .15s, box-shadow .15s, transform .1s;
+  transition: border-color .15s, box-shadow .15s;
   padding: 1.5rem 1rem;
   font-family: 'Nunito', sans-serif;
-  box-shadow: 0 2px 10px rgba(0,0,0,.07);
+  box-shadow: var(--shadow);
 }
 .type-card:hover {
   border-color: var(--red);
-  box-shadow: 0 6px 24px rgba(197,5,12,.2);
-  transform: translateY(-3px);
+  box-shadow: 0 4px 16px rgba(0,0,0,.1);
 }
-.type-card:active { transform: scale(.97); }
+.type-card:active { opacity: .88; }
 .type-card .tc-emoji { font-size: 3.2rem; line-height: 1.1; letter-spacing: .1em; }
 .type-card .tc-title {
   font-family: 'Nunito', sans-serif;
@@ -248,11 +249,12 @@ body {
 #bracket-player-name { font-family: 'Nunito', sans-serif; font-weight: 700; font-size: 1.1rem; opacity: .9; }
 
 .bracket-tip {
-  background: #fff3cd;
-  border-left: 4px solid #f0ad4e;
-  padding: .6rem 1rem;
-  font-size: .9rem;
+  background: var(--offwhite);
+  border-bottom: 1px solid var(--border);
+  padding: .55rem 1rem;
+  font-size: .88rem;
   font-weight: 600;
+  color: var(--muted);
 }
 
 .bracket-scroll-wrapper {
@@ -380,9 +382,8 @@ body {
   line-height: 1.2;
 }
 .team-slot:hover:not([disabled]):not(.empty) {
-  background: #fff0f0;
+  background: #fef2f2;
   border-color: var(--red);
-  transform: scale(1.02);
 }
 .team-slot.picked  { background: var(--red); color: var(--white); border-color: var(--red-dk); }
 .team-slot.correct { background: #d4edda; border-color: #28a745; color: #155724; }
@@ -423,9 +424,9 @@ body {
   width: 180px;
   min-width: 180px;
   padding: 0 .4rem;
-  background: #fff5f5;
-  border-left: 2px solid #f0c0c0;
-  border-right: 2px solid #f0c0c0;
+  background: var(--offwhite);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
 }
 .center-label {
   flex-shrink: 0;
@@ -481,15 +482,12 @@ body {
 /* Tiebreaker section (shown when all 63 picks made) */
 #tiebreaker-section {
   display: none;
-  margin-bottom: .85rem;
+  margin: 0 auto .85rem;
   padding: .85rem 1rem;
-  background: #fff8f8;
-  border: 2px solid #f0c0c0;
-  border-radius: 14px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
   max-width: 500px;
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: .85rem;
 }
 .tb-label {
   display: block;
@@ -503,8 +501,8 @@ body {
   font-size: 1.4rem;
   font-weight: 800;
   padding: .4rem .85rem;
-  border: 2.5px solid var(--border);
-  border-radius: 12px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
   width: 130px;
   text-align: center;
   outline: none;
@@ -535,14 +533,15 @@ body {
 }
 .success-champ {
   display: inline-block;
-  background: #fff5f5;
-  border: 2px solid #f0c0c0;
-  border-radius: 12px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
   padding: .7rem 1.4rem;
   font-size: 1.05rem;
   font-weight: 700;
   color: var(--text);
   margin-bottom: 1rem;
+  box-shadow: var(--shadow);
 }
 .success-actions {
   display: flex;
@@ -583,18 +582,19 @@ body {
   flex: 1;
   min-width: 180px;
   background: var(--white);
-  border: 2px solid var(--border);
-  border-radius: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
   padding: .85rem 1rem;
   display: flex;
   flex-direction: column;
   gap: .25rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  box-shadow: var(--shadow);
 }
 .award-card.crowned {
   border-color: var(--red);
-  background: #fff5f5;
-  box-shadow: 0 4px 16px rgba(197,5,12,.18);
+  border-width: 2px;
+  background: var(--white);
+  box-shadow: 0 0 0 3px rgba(197,5,12,.08), var(--shadow);
 }
 .award-title {
   font-size: .72rem;
@@ -630,8 +630,8 @@ body {
 /* Tabs */
 .lb-tabs-bar {
   display: flex;
-  background: #fff0f0;
-  border-bottom: 2px solid var(--border);
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
   overflow-x: auto;
 }
 .lb-tab {
@@ -660,8 +660,8 @@ body {
   font-weight: 700;
   color: var(--muted);
   background: var(--white);
-  border: 1.5px solid var(--border);
-  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
   padding: .5rem .85rem;
   margin-bottom: .75rem;
   text-align: center;
@@ -672,10 +672,10 @@ body {
 .lb-tb-note {
   font-size: .82rem;
   font-weight: 700;
-  color: #856404;
-  background: #fff3cd;
-  border: 1.5px solid #f0ad4e;
-  border-radius: 10px;
+  color: var(--muted);
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 6px;
   padding: .45rem .85rem;
   margin-bottom: .75rem;
   text-align: center;
@@ -684,10 +684,10 @@ body {
 /* Rows */
 .lb-row {
   background: var(--white);
-  border-radius: 14px;
-  border: 1.5px solid var(--border);
-  margin-bottom: .75rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-bottom: .6rem;
+  box-shadow: var(--shadow);
   overflow: hidden;
 }
 .lb-main {
@@ -699,7 +699,7 @@ body {
   user-select: none;
   transition: background .12s;
 }
-.lb-main:hover { background: #fff8f8; }
+.lb-main:hover { background: var(--offwhite); }
 
 .lb-rank        { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.3rem; min-width: 2.2rem; }
 .lb-type-emoji  { margin-right: .25rem; font-size: .95rem; }
@@ -728,7 +728,7 @@ body {
   letter-spacing: .03em;
 }
 .picks-list { display: flex; flex-wrap: wrap; gap: .35rem; }
-.pick-chip      { font-size: .78rem; font-weight: 700; padding: .2rem .55rem; border-radius: 20px; border: 1.5px solid var(--border); background: var(--white); }
+.pick-chip      { font-size: .78rem; font-weight: 700; padding: .2rem .55rem; border-radius: 4px; border: 1px solid var(--border); background: var(--white); }
 .pick-correct   { background: #d4edda; border-color: #28a745; color: #155724; }
 .pick-wrong     { background: #f8d7da; border-color: #dc3545; color: #721c24; text-decoration: line-through; }
 .pick-pending   { background: #fff3cd; border-color: #f0ad4e; color: #856404; }
@@ -750,15 +750,15 @@ body {
   display: none;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--red) 55%, #8b0005 100%);
+  background: var(--red);
   padding: 2rem 1rem;
 }
 #page-admin-setup.active { display: flex; }
 
 .admin-card {
   background: var(--white);
-  border-radius: 20px;
-  box-shadow: 0 12px 40px rgba(0,0,0,.25);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.2);
   padding: 2.25rem 2rem;
   width: 100%;
   max-width: 400px;
@@ -790,8 +790,8 @@ body {
   font-size: 1rem;
   font-weight: 600;
   padding: .7rem 1rem;
-  border: 2.5px solid var(--border);
-  border-radius: 12px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
   outline: none;
   transition: border-color .2s;
   margin-bottom: 1rem;
