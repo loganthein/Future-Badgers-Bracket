@@ -399,7 +399,7 @@ function _buildPicksDetail(picks, results, bdata) {
       const actual = results[i];
       if (!pick) continue;
       const status = actual ? (pick === actual ? 'correct' : 'wrong') : '';
-      roundPicks.push({ pick, status });
+      roundPicks.push({ pick, status, gameIdx: i });
     }
 
     if (roundPicks.length === 0) continue;
@@ -407,9 +407,9 @@ function _buildPicksDetail(picks, results, bdata) {
     html += `<div class="picks-round">
       <div class="picks-round-label">${ROUND_NAMES[r]} (${ROUND_POINTS[r]} pt${ROUND_POINTS[r] > 1 ? 's' : ''})</div>
       <div class="picks-list">`;
-    roundPicks.forEach(({ pick, status }) => {
+    roundPicks.forEach(({ pick, status, gameIdx }) => {
       const icon = status === 'correct' ? '✓' : status === 'wrong' ? '✗' : '';
-      html += `<span class="pick-chip pick-${status || 'pending'}">${icon} ${_escLb(pick)}</span>`;
+      html += `<span class="pick-chip pick-${status || 'pending'}" onclick="showGameDist(${gameIdx})" style="cursor:pointer" title="See who picked this">${icon} ${_escLb(pick)}</span>`;
     });
     html += '</div></div>';
   }
@@ -417,4 +417,85 @@ function _buildPicksDetail(picks, results, bdata) {
   html += '</div>';
   bracketData = prevBD;
   return html;
+}
+
+// ── Game pick distribution modal ────────────────────────────
+
+function showGameDist(gameIdx) {
+  if (!_picksVisible()) return;
+  if (!_cachedEntries || !_cachedBdata) return;
+
+  const round     = getRoundFromIndex(gameIdx);
+  const results   = _cachedResults || new Array(63).fill(null);
+  const [t1, t2]  = _getGameParticipants(gameIdx, results, _cachedBdata);
+
+  const t1Pickers = [], t2Pickers = [];
+  for (const entry of _cachedEntries) {
+    const pick = entry.picks?.[gameIdx];
+    if (pick === t1) t1Pickers.push(entry.nickname);
+    else if (pick === t2) t2Pickers.push(entry.nickname);
+  }
+
+  const modal     = document.getElementById('game-dist-modal');
+  const titleEl   = document.getElementById('game-dist-title');
+  const subtitleEl = document.getElementById('game-dist-subtitle');
+  const bodyEl    = document.getElementById('game-dist-body');
+  if (!modal) return;
+
+  titleEl.textContent = ROUND_NAMES[round];
+  if (round < 4) {
+    const offset    = gameIdx - ROUND_OFFSETS[round];
+    const regionIdx = Math.floor(offset / GAMES_PER_REGION[round]);
+    subtitleEl.textContent = REGIONS[regionIdx] + ' Region';
+  } else if (round === 4) {
+    subtitleEl.textContent = gameIdx === 60 ? 'East vs South' : 'West vs Midwest';
+  } else {
+    subtitleEl.textContent = 'National Championship';
+  }
+
+  if (!t1 && !t2) {
+    bodyEl.innerHTML = '<div class="gd-locked">Teams not yet determined for this game.</div>';
+  } else {
+    const total  = t1Pickers.length + t2Pickers.length;
+    const t1pct  = total > 0 ? Math.round(t1Pickers.length / total * 100) : 0;
+    const t2pct  = total > 0 ? 100 - t1pct : 0;
+
+    function seedOf(name) {
+      for (const r of REGIONS) {
+        const t = (_cachedBdata?.teams?.[r] || []).find(t => t.name === name);
+        if (t) return t.seed;
+      }
+      return null;
+    }
+
+    function teamPanel(name, pickers, pct) {
+      if (!name) return `<div class="gd-team"><div class="gd-team-name">TBD</div><div class="gd-count">—</div></div>`;
+      const logoUrl = getTeamLogoUrl(name);
+      const logo    = logoUrl ? `<img src="${logoUrl}" width="22" height="22" alt="" onerror="this.style.display='none'" style="border-radius:3px;flex-shrink:0">` : '';
+      const seed    = seedOf(name);
+      const seedBadge = seed ? `<span class="gd-seed">${seed}</span>` : '';
+      const pickerItems = pickers.map(n => `<div class="gd-picker">${_escLb(n)}</div>`).join('');
+      return `<div class="gd-team">
+        <div class="gd-team-name">${logo}${seedBadge}${_escLb(name)}</div>
+        <div class="gd-count">${pickers.length} pick${pickers.length !== 1 ? 's' : ''} · ${pct}%</div>
+        <div class="gd-bar"><div class="gd-bar-fill" style="width:${pct}%"></div></div>
+        <div class="gd-pickers">${pickerItems}</div>
+      </div>`;
+    }
+
+    bodyEl.innerHTML = `<div class="gd-teams">
+      ${teamPanel(t1, t1Pickers, t1pct)}
+      <div class="gd-vs">vs</div>
+      ${teamPanel(t2, t2Pickers, t2pct)}
+    </div>`;
+  }
+
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeGameDist() {
+  const modal = document.getElementById('game-dist-modal');
+  if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
 }
