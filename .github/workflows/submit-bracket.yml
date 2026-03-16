@@ -1,0 +1,42 @@
+name: Submit Bracket Pick
+
+on:
+  workflow_dispatch:
+    inputs:
+      nickname:
+        description: 'Player nickname'
+        required: true
+      type:
+        description: 'badger or future_badger'
+        required: true
+      picks:
+        description: 'JSON array of 63 team name strings'
+        required: true
+      tiebreaker:
+        description: 'Wisconsin 3-point guess (integer)'
+        required: true
+
+permissions:
+  contents: read   # script only reads; Gist PATCH is direct API call
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install node-fetch
+
+      - name: Submit bracket pick
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          NICKNAME:   ${{ github.event.inputs.nickname }}
+          TYPE:       ${{ github.event.inputs.type }}
+          PICKS:      ${{ github.event.inputs.picks }}
+          TIEBREAKER: ${{ github.event.inputs.tiebreaker }}
+        run: node scripts/submit-bracket.js

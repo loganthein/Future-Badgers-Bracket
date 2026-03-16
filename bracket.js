@@ -414,22 +414,28 @@ async function lockBracket() {
     return;
   }
 
-  const btn = document.getElementById('lock-btn');
-  btn.disabled = true;
-  btn.textContent = 'Saving...';
+  const btn     = document.getElementById('lock-btn');
+  const spinner = document.getElementById('bracket-saving');
+  btn.style.display     = 'none';
+  if (spinner) spinner.style.display = 'block';
+
+  function _resetBtn() {
+    btn.disabled          = false;
+    btn.style.display     = '';
+    if (spinner) spinner.style.display = 'none';
+  }
 
   try {
     // Final duplicate check right before write (race condition safety)
     const existing = await fetchAllPicks();
     if (existing[currentNickname]) {
+      _resetBtn();
       showPage('page-welcome');
       const input = document.getElementById('nickname-input');
       if (input) input.value = currentNickname;
       document.getElementById('nickname-error').textContent =
-        `"${currentNickname}" was just taken by someone else! Try a different nickname.`;
+        `"${currentNickname}" was just taken by someone else! Try a different name.`;
       document.getElementById('nickname-error').style.display = 'block';
-      btn.disabled = false;
-      btn.textContent = 'Lock In My Bracket!';
       return;
     }
 
@@ -437,9 +443,17 @@ async function lockBracket() {
     showPage('page-success');
     initSuccessPage(tbVal);
   } catch (e) {
-    alert('Oops! Could not save your bracket: ' + e.message);
-    btn.disabled = false;
-    btn.textContent = '🔒 Lock In My Bracket!';
+    _resetBtn();
+    if (e.code === 'NICKNAME_TAKEN') {
+      showPage('page-welcome');
+      const input = document.getElementById('nickname-input');
+      if (input) input.value = currentNickname;
+      document.getElementById('nickname-error').textContent =
+        `"${currentNickname}" is already taken! Try a different name.`;
+      document.getElementById('nickname-error').style.display = 'block';
+    } else {
+      alert('Oops! Could not save your bracket: ' + e.message);
+    }
   }
 }
 
