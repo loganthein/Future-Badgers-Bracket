@@ -278,19 +278,69 @@ body {
 .region-label.pos-right { align-self: flex-end; }
 
 .region-rounds { display: flex; flex-direction: row; height: 560px; }
-.bracket-half:last-child .region-rounds { flex-direction: row-reverse; }
+/* Right half: HTML order [R4,R3,R2,R1] + normal row = E8 left, R64 right ✓ */
 
 .round-col {
   display: flex;
   flex-direction: column;
-  justify-content: space-around;
   height: 560px;
   width: 125px;
   min-width: 125px;
   padding: 0 3px;
+  overflow: visible; /* connector lines bleed into column gaps */
 }
 
-.matchup { display: flex; flex-direction: column; gap: 2px; }
+/* Two consecutive matchups in a pair — spacing via justify-content, lines via ::before/::after */
+.game-pair {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  position: relative;
+  overflow: visible;
+}
+
+.matchup { display: flex; flex-direction: column; gap: 2px; position: relative; }
+
+/* ── Bracket connector lines ── */
+
+/* LEFT half: horizontal line extends RIGHT from each matchup center */
+.bracket-half:first-child .round-col:not([data-round="3"]) .matchup::after {
+  content: ''; position: absolute;
+  right: -7px; top: 50%; transform: translateY(-50%);
+  width: 7px; height: 1px; background: #ccc;
+}
+/* LEFT half: vertical line on right side of pair, connecting the two matchup centers */
+.bracket-half:first-child .round-col:not([data-round="3"]) .game-pair::after {
+  content: ''; position: absolute;
+  right: -7px; top: 25%; height: 50%;
+  width: 1px; background: #ccc;
+}
+/* LEFT half E8: short connector toward center FF column */
+.bracket-half:first-child .round-col[data-round="3"] .matchup::after {
+  content: ''; position: absolute;
+  right: -10px; top: 50%; transform: translateY(-50%);
+  width: 10px; height: 1px; background: #ccc;
+}
+
+/* RIGHT half: horizontal line extends LEFT from each matchup center */
+.bracket-half:last-child .round-col:not([data-round="3"]) .matchup::before {
+  content: ''; position: absolute;
+  left: -7px; top: 50%; transform: translateY(-50%);
+  width: 7px; height: 1px; background: #ccc;
+}
+/* RIGHT half: vertical line on left side of pair */
+.bracket-half:last-child .round-col:not([data-round="3"]) .game-pair::before {
+  content: ''; position: absolute;
+  left: -7px; top: 25%; height: 50%;
+  width: 1px; background: #ccc;
+}
+/* RIGHT half E8: short connector toward center FF column */
+.bracket-half:last-child .round-col[data-round="3"] .matchup::before {
+  content: ''; position: absolute;
+  left: -10px; top: 50%; transform: translateY(-50%);
+  width: 10px; height: 1px; background: #ccc;
+}
 
 .team-slot {
   display: flex;
