@@ -49,18 +49,22 @@ function getRoundFromIndex(i) {
 
 function getTeamsByRegion(region) {
   if (!bracketData?.teams) return [];
-  return bracketData.teams
-    .filter(t => t.region === region)
-    .sort((a, b) => a.seed - b.seed);
+  return (bracketData.teams[region] || []).slice().sort((a, b) => a.seed - b.seed);
 }
 
 function getTeamBySeed(region, seed) {
-  return getTeamsByRegion(region).find(t => t.seed === seed) || null;
+  if (!bracketData?.teams) return null;
+  return (bracketData.teams[region] || []).find(t => t.seed === seed) || null;
 }
 
+// Returns {seed, name, region} or null — searches all regions
 function getTeamInfo(name) {
   if (!name || !bracketData?.teams) return null;
-  return bracketData.teams.find(t => t.name === name) || null;
+  for (const region of REGIONS) {
+    const team = (bracketData.teams[region] || []).find(t => t.name === name);
+    if (team) return { ...team, region };
+  }
+  return null;
 }
 
 // ============================================================
@@ -335,7 +339,7 @@ async function initBracket(nickname, type) {
     return;
   }
 
-  if (!bdata.teams || bdata.teams.length < 64) {
+  if (!bdata.teams || REGIONS.some(r => (bdata.teams[r] || []).length < 16)) {
     container.innerHTML = `<div class="error">Bracket isn't set up yet — ask your organizer to add the teams!</div>`;
     return;
   }
