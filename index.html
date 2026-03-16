@@ -502,6 +502,64 @@ body {
 .lb-header h2 { font-family: 'Fredoka One', cursive; font-size: 1.5rem; }
 #lb-updated   { font-size: .8rem; opacity: .8; }
 
+/* Awards section */
+.awards-section {
+  max-width: 720px;
+  margin: 1.25rem auto .25rem;
+  padding: 0 .75rem;
+}
+.awards-grid {
+  display: flex;
+  gap: .85rem;
+  flex-wrap: wrap;
+}
+.award-card {
+  flex: 1;
+  min-width: 180px;
+  background: var(--white);
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  padding: .85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+.award-card.crowned {
+  border-color: var(--red);
+  background: #fff5f5;
+  box-shadow: 0 4px 16px rgba(197,5,12,.18);
+}
+.award-title {
+  font-size: .72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--red);
+}
+.award-winner {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.15rem;
+  color: var(--text);
+  line-height: 1.2;
+}
+.award-winner.tbd { color: var(--muted); font-size: 1rem; }
+.award-meta {
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+.award-champ-pick {
+  font-size: .78rem;
+  font-weight: 700;
+  color: #555;
+  margin-top: .1rem;
+}
+@media (max-width: 580px) {
+  .awards-grid { flex-direction: column; }
+  .award-card  { min-width: unset; }
+}
+
 /* Tabs */
 .lb-tabs-bar {
   display: flex;
@@ -859,9 +917,11 @@ body {
     <span id="lb-updated"></span>
   </div>
 
+  <div id="awards-section" class="awards-section" style="display:none"></div>
+
   <div class="lb-tabs-bar">
     <button class="lb-tab active" data-tab="overall"        onclick="setLbTab('overall')">🦡 Overall</button>
-    <button class="lb-tab"        data-tab="badger"         onclick="setLbTab('badger')">🦡👴 Badgers</button>
+    <button class="lb-tab"        data-tab="badger"         onclick="setLbTab('badger')">🦡👴 Badger Alums</button>
     <button class="lb-tab"        data-tab="future_badger"  onclick="setLbTab('future_badger')">🦡👶 Future Badgers</button>
   </div>
 
