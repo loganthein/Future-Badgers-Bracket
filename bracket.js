@@ -394,6 +394,7 @@ async function initBracket(nickname, type) {
   }
 
   bracketData = bdata;
+  if (typeof _pushBracketHistoryState === 'function') _pushBracketHistoryState();
   renderBracket();
   updateLockButton();
 
@@ -440,6 +441,7 @@ async function lockBracket() {
     }
 
     await submitPicks(currentNickname, userPicks, currentUserType, tbVal);
+    if (typeof _bracketSubmitted !== 'undefined') _bracketSubmitted = true;
     showPage('page-success');
     initSuccessPage(tbVal);
   } catch (e) {

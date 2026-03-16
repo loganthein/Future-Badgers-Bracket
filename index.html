@@ -800,6 +800,47 @@ body {
 }
 
 
+/* ── Leave Bracket Confirmation Modal ── */
+.lbm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+.lbm-card {
+  background: var(--white);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.2);
+  padding: 1.75rem 1.5rem 1.5rem;
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+}
+.lbm-title {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--text);
+  margin-bottom: .5rem;
+}
+.lbm-body {
+  font-size: .95rem;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  line-height: 1.45;
+}
+.lbm-actions {
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+}
+.lbm-actions .btn { width: 100%; justify-content: center; }
+
 /* ── My Bracket Modal ── */
 .mbm-overlay {
   position: fixed;
@@ -1046,9 +1087,21 @@ body {
 <!-- ══════════════════════════════════════════
      PAGE 3: BRACKET PICKER
 ══════════════════════════════════════════ -->
+<!-- Leave-bracket confirmation modal -->
+<div id="leave-bracket-modal" class="lbm-overlay" style="display:none">
+  <div class="lbm-card">
+    <div class="lbm-title">Leave bracket?</div>
+    <div class="lbm-body">You'll lose all your picks if you go back.</div>
+    <div class="lbm-actions">
+      <button class="btn btn-primary" onclick="closeLeaveBracketModal()">Stay &amp; Keep Picking</button>
+      <button class="btn btn-secondary" onclick="confirmLeaveBracket()">Go Back</button>
+    </div>
+  </div>
+</div>
+
 <div id="page-bracket" class="page">
   <div class="bracket-header">
-    <button class="btn btn-secondary" style="padding:.4rem 1rem;font-size:.9rem" onclick="showPage('page-welcome')">← Back</button>
+    <button class="btn btn-secondary" style="padding:.4rem 1rem;font-size:.9rem" onclick="bracketBackGuard()">← Back</button>
     <h2>Pick Your Bracket</h2>
     <span id="bracket-player-name"></span>
   </div>
@@ -1170,6 +1223,52 @@ body {
 <script>
 // Show welcome on load
 document.getElementById('page-welcome').classList.add('active');
+
+// ── Leave-bracket guard ───────────────────────────────────
+
+let _bracketSubmitted = false; // set true after successful submit
+
+function bracketBackGuard() {
+  const picksMade = (typeof userPicks !== 'undefined') && userPicks.some(p => p !== null);
+  if (!picksMade || _bracketSubmitted) {
+    showPage('page-welcome');
+    return;
+  }
+  document.getElementById('leave-bracket-modal').style.display = 'flex';
+}
+
+function closeLeaveBracketModal() {
+  document.getElementById('leave-bracket-modal').style.display = 'none';
+}
+
+function confirmLeaveBracket() {
+  closeLeaveBracketModal();
+  showPage('page-welcome');
+}
+
+// Browser back button — push a history entry when bracket page opens,
+// intercept popstate to show the modal instead of navigating away.
+function _pushBracketHistoryState() {
+  history.pushState({ page: 'bracket' }, '');
+}
+
+window.addEventListener('popstate', function (e) {
+  const onBracket = document.getElementById('page-bracket')?.classList.contains('active');
+  if (!onBracket) return;
+  // Re-push the state so the URL doesn't actually change
+  history.pushState({ page: 'bracket' }, '');
+  bracketBackGuard();
+});
+
+// Warn on hard navigation away (tab close, URL change, refresh) while mid-bracket
+window.addEventListener('beforeunload', function (e) {
+  const onBracket = document.getElementById('page-bracket')?.classList.contains('active');
+  const picksMade = (typeof userPicks !== 'undefined') && userPicks.some(p => p !== null);
+  if (onBracket && picksMade && !_bracketSubmitted) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
 
 // ── Page navigation ──────────────────────────────────────
 
