@@ -74,7 +74,7 @@ async function _refreshLeaderboard() {
 
   _renderAwards(entries, results, bdata);
   _renderEntries(entries, results, bdata);
-  document.getElementById('lb-updated').textContent = `Updated ${new Date().toLocaleTimeString()}`;
+  document.getElementById('lb-updated').textContent = `Last updated: ${new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}`;
 }
 
 // ── Max Available calculation ──────────────────────────────
@@ -204,7 +204,7 @@ function _renderEntries(allEntries, results, bdata) {
     const maxDisplay = picksVisible ? String(entry.maxAvailable) : '—';
 
     // Tiebreaker
-    let tbDisplay = picksVisible ? '—' : '<span class="tb-lock">&#128274;</span>';
+    let tbDisplay = '—';
     if (picksVisible && entry.tiebreaker != null) {
       tbDisplay = String(entry.tiebreaker);
       if (tbActive) {

@@ -359,7 +359,7 @@ async function initBracket(nickname, type) {
   if (tbInput) tbInput.value = '';
 
   const typeLabel = type === 'badger' ? 'Badger Alum' : 'Future Badger';
-  document.getElementById('bracket-player-name').textContent = `${typeLabel}: ${nickname}`;
+  document.getElementById('bracket-player-name').textContent = nickname;
   showPage('page-bracket');
 
   const container = document.getElementById('bracket-scroll');
