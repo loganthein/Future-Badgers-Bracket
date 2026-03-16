@@ -1,5 +1,8 @@
 // Leaderboard — load, score, and display all submitted brackets
 
+const PICKS_REVEAL_TIME = new Date('2026-03-19T17:00:00Z'); // Thursday Mar 19 11am CT
+function _picksVisible() { return new Date() >= PICKS_REVEAL_TIME; }
+
 let _leaderboardTimer = null;
 let _cachedEntries    = null;
 let _cachedResults    = null;
@@ -106,6 +109,8 @@ function _renderEntries(allEntries, results, bdata) {
     tbNote.style.display = 'block'; // always show the note
   }
 
+  const picksVisible = _picksVisible();
+
   let html = '';
   entries.forEach((entry, i) => {
     const rank   = i + 1;
@@ -123,18 +128,26 @@ function _renderEntries(allEntries, results, bdata) {
       }
     }
 
+    const scoreDisplay = picksVisible ? `${entry.score} pts` : '—';
+    const championDisplay = picksVisible ? `🏆 ${_escLb(entry.champion)}` : '🔒';
+    const detailContent = picksVisible
+      ? _buildPicksDetail(entry.picks, results, bdata)
+      : '<div class="picks-locked">🔒 Picks are revealed when the tournament begins — check back Thursday at 11am!</div>';
+    const clickHandler = picksVisible ? `onclick="toggleLbDetail('${safeId}')"` : '';
+    const expandArrow  = picksVisible ? '<span class="lb-expand">▼</span>' : '';
+
     html += `
       <div class="lb-row" id="${safeId}">
-        <div class="lb-main" onclick="toggleLbDetail('${safeId}')">
+        <div class="lb-main" ${clickHandler}>
           <span class="lb-rank">${medal}</span>
           <span class="lb-name"><span class="lb-type-emoji">${emoji}</span>${_escLb(entry.nickname)}</span>
-          <span class="lb-champion lb-hide-sm">🏆 ${_escLb(entry.champion)}</span>
+          <span class="lb-champion lb-hide-sm">${championDisplay}</span>
           <span class="lb-tiebreaker lb-hide-sm">${tbDisplay}</span>
-          <span class="lb-score">${entry.score} pts</span>
-          <span class="lb-expand">▼</span>
+          <span class="lb-score">${scoreDisplay}</span>
+          ${expandArrow}
         </div>
         <div class="lb-detail" id="detail-${safeId}" style="display:none">
-          ${_buildPicksDetail(entry.picks, results, bdata)}
+          ${detailContent}
         </div>
       </div>`;
   });
