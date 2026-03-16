@@ -5,7 +5,7 @@ const _GH_HEADERS = {
 };
 const _GH_AUTH_HEADERS = () => ({
   ..._GH_HEADERS,
-  'Authorization': `token ${WORKFLOW_TOKEN}`,
+  'Authorization': `Bearer ${WORKFLOW_TOKEN}`,
 });
 
 async function _fetchGist(gistId) {
