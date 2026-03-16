@@ -116,7 +116,7 @@ function _renderEntries(allEntries, results, bdata) {
   entries.forEach((entry, i) => {
     const rank   = i + 1;
     const medal  = `#${rank}`;
-    const emoji  = _typeEmoji(entry.type);
+    // type label intentionally not shown next to name in rows
     const safeId = `lbrow-${i}`;
 
     // Tiebreaker display
@@ -143,7 +143,7 @@ function _renderEntries(allEntries, results, bdata) {
       <div class="lb-row" id="${safeId}">
         <div class="lb-main" ${clickHandler}>
           <span class="lb-rank">${medal}</span>
-          <span class="lb-name"><span class="lb-type-emoji">${emoji}</span>${_escLb(entry.nickname)}</span>
+          <span class="lb-name">${_escLb(entry.nickname)}</span>
           <span class="lb-champion lb-hide-sm">${championDisplay}</span>
           <span class="lb-tiebreaker lb-hide-sm">${tbDisplay}</span>
           <span class="lb-score">${scoreDisplay}</span>
@@ -264,7 +264,7 @@ function _renderAwards(allEntries, results, bdata) {
   }
 
   el.innerHTML = `<div class="awards-grid">
-    ${card('Overall Champion',  overall, true)}
+    ${card('🏆 Overall Champion',  overall, true)}
     ${card('Top Badger Alum',   alums,   false)}
     ${card('Top Future Badger', futureB, false)}
   </div>`;
