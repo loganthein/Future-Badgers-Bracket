@@ -18,7 +18,8 @@ Single-page bracket challenge app hosted on GitHub Pages. All logic lives in:
 
 ## Key Conventions
 
-- Do not store secrets in any file — the Gist token lives in `localStorage` only.
-- All Gist reads are unauthenticated (public gists). Only `_patchGist` sends `Authorization`.
+- Do not store secrets in any file — the workflow token lives in `localStorage` only (`workflow_token` key).
+- All reads are unauthenticated: bracket data via public Gist API, picks via `raw.githubusercontent.com`.
+- Writes go through GitHub Actions `workflow_dispatch` (`.github/workflows/submit-pick.yml`); the token only needs `workflow` scope.
 - No frameworks, no build tools — vanilla HTML/CSS/JS only.
 - The bracket uses a flat array of 63 picks indexed by `getGameIndex(round, regionIdx, gameInRegion)`.
