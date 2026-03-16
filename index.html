@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🦡 Future Badgers Bracket Challenge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ── Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --red:      #C5050C;
+  --red-dk:   #a0040a;
+  --white:    #ffffff;
+  --offwhite: #fdf6f6;
+  --gray:     #e8e8e8;
+  --muted:    #888;
+  --green:    #2ecc71;
+  --text:     #1a1a1a;
+  --border:   #ddd;
+  --shadow:   0 2px 12px rgba(197,5,12,.15);
+}
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--offwhite);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.page { display: none; }
+.page.active { display: block; }
+
+/* ── Shared header ── */
+.site-header {
+  background: var(--red);
+  color: var(--white);
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+.site-header .logo { font-family: 'Fredoka One', cursive; font-size: 1.6rem; }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-block;
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 800;
+  padding: .75rem 2rem;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  transition: transform .1s, box-shadow .1s;
+  text-decoration: none;
+  user-select: none;
+}
+.btn:active { transform: scale(.97); }
+.btn-primary  { background: var(--red); color: var(--white); box-shadow: var(--shadow); }
+.btn-primary:hover  { background: var(--red-dk); box-shadow: 0 4px 18px rgba(197,5,12,.35); }
+.btn-secondary { background: var(--white); color: var(--red); border: 2.5px solid var(--red); }
+.btn-secondary:hover { background: #fff0f0; }
+.btn:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+.btn-lg { font-size: 1.3rem; padding: 1rem 2.5rem; }
+
+/* ── Util ── */
+.loading    { padding: 2rem; text-align: center; font-size: 1.1rem; color: var(--muted); }
+.error      { padding: 2rem; text-align: center; color: var(--red); font-weight: 700; }
+.empty-state{ padding: 2rem; text-align: center; color: var(--muted); font-size: 1.1rem; }
+
+/* ═══════════════════════════════════════════════════
+   PAGE 1 — WELCOME
+═══════════════════════════════════════════════════ */
+.hero-banner {
+  background: linear-gradient(135deg, var(--red) 55%, #8b0005 100%);
+  color: var(--white);
+  padding: 3rem 1.5rem 4rem;
+  text-align: center;
+}
+.hero-banner .big-badger { font-size: 5rem; display: block; margin-bottom: .5rem; }
+.hero-banner h1 {
+  font-family: 'Fredoka One', cursive;
+  font-size: clamp(1.8rem, 5vw, 3rem);
+  line-height: 1.2;
+  margin-bottom: .5rem;
+}
+.hero-banner p { font-size: 1.05rem; opacity: .9; }
+
+.welcome-card {
+  max-width: 480px;
+  margin: -2rem auto 2rem;
+  background: var(--white);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0,0,0,.12);
+  padding: 2rem 1.5rem;
+}
+
+.welcome-card label {
+  display: block;
+  font-weight: 800;
+  font-size: 1rem;
+  margin-bottom: .4rem;
+}
+.welcome-card input[type="text"] {
+  width: 100%;
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  padding: .75rem 1rem;
+  border: 2.5px solid var(--border);
+  border-radius: 12px;
+  outline: none;
+  transition: border-color .2s;
+}
+.welcome-card input[type="text"]:focus { border-color: var(--red); }
+
+.nickname-error {
+  display: none;
+  background: #fff0f0;
+  border: 1.5px solid var(--red);
+  border-radius: 10px;
+  color: var(--red);
+  font-weight: 700;
+  font-size: .9rem;
+  padding: .55rem .85rem;
+  margin-top: .5rem;
+}
+
+.btn-row {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+  margin-top: 1.25rem;
+}
+
+.rules {
+  margin-top: 1.5rem;
+  background: #fff8f8;
+  border-radius: 12px;
+  padding: 1rem;
+  font-size: .92rem;
+}
+.rules h3  { font-weight: 800; margin-bottom: .4rem; color: var(--red); }
+.rules li  { margin-left: 1.2rem; margin-bottom: .25rem; }
+
+/* ═══════════════════════════════════════════════════
+   PAGE 2 — TYPE SELECT
+═══════════════════════════════════════════════════ */
+.type-select-body {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 2rem 1rem 3rem;
+  text-align: center;
+}
+.type-select-body h2 {
+  font-family: 'Fredoka One', cursive;
+  font-size: 2rem;
+  color: var(--red);
+  margin-bottom: .4rem;
+}
+.type-select-body > p {
+  font-size: 1rem;
+  color: var(--muted);
+  margin-bottom: 2rem;
+}
+
+.type-cards {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.type-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .6rem;
+  width: 200px;
+  min-height: 180px;
+  background: var(--white);
+  border: 3px solid var(--border);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: border-color .15s, box-shadow .15s, transform .1s;
+  padding: 1.5rem 1rem;
+  font-family: 'Nunito', sans-serif;
+  box-shadow: 0 2px 10px rgba(0,0,0,.07);
+}
+.type-card:hover {
+  border-color: var(--red);
+  box-shadow: 0 6px 24px rgba(197,5,12,.2);
+  transform: translateY(-3px);
+}
+.type-card:active { transform: scale(.97); }
+.type-card .tc-emoji { font-size: 3rem; line-height: 1; }
+.type-card .tc-title {
+  font-family: 'Fredoka One', cursive;
+  font-size: 1.3rem;
+  color: var(--text);
+}
+.type-card .tc-sub {
+  font-size: .9rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.type-loading {
+  margin-top: 1.5rem;
+  font-size: 1rem;
+  color: var(--muted);
+  font-weight: 600;
+  display: none;
+}
+
+/* ═══════════════════════════════════════════════════
+   PAGE 3 — BRACKET
+═══════════════════════════════════════════════════ */
+.bracket-header {
+  background: var(--red);
+  color: var(--white);
+  padding: .75rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+.bracket-header h2 { font-family: 'Fredoka One', cursive; font-size: 1.3rem; }
+#bracket-player-name { font-family: 'Fredoka One', cursive; font-size: 1.1rem; opacity: .9; }
+
+.bracket-tip {
+  background: #fff3cd;
+  border-left: 4px solid #f0ad4e;
+  padding: .6rem 1rem;
+  font-size: .9rem;
+  font-weight: 600;
+}
+
+.bracket-scroll-wrapper {
+  overflow-x: auto;
+  padding: 1rem .5rem 1.5rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Inner bracket layout ── */
+.bracket-inner {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  min-width: 1400px;
+}
+
+.bracket-half {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.region-block { display: flex; flex-direction: column; }
+.region-label {
+  font-family: 'Fredoka One', cursive;
+  font-size: .75rem;
+  letter-spacing: .05em;
+  padding: .15rem .4rem;
+  background: var(--red);
+  color: var(--white);
+  border-radius: 4px;
+  margin: .25rem .25rem .15rem;
+  align-self: flex-start;
+}
+.region-label.pos-right { align-self: flex-end; }
+
+.region-rounds { display: flex; flex-direction: row; height: 560px; }
+.bracket-half:last-child .region-rounds { flex-direction: row-reverse; }
+
+.round-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  height: 560px;
+  width: 125px;
+  min-width: 125px;
+  padding: 0 3px;
+}
+
+.matchup { display: flex; flex-direction: column; gap: 2px; }
+
+.team-slot {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  padding: 4px 6px;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-size: .72rem;
+  font-weight: 700;
+  text-align: left;
+  transition: background .12s, border-color .12s, transform .08s;
+  min-height: 26px;
+  line-height: 1.2;
+}
+.team-slot:hover:not([disabled]):not(.empty) {
+  background: #fff0f0;
+  border-color: var(--red);
+  transform: scale(1.02);
+}
+.team-slot.picked  { background: var(--red); color: var(--white); border-color: var(--red-dk); }
+.team-slot.correct { background: #d4edda; border-color: #28a745; color: #155724; }
+.team-slot.wrong   { background: #f8d7da; border-color: #dc3545; color: #721c24; text-decoration: line-through; opacity: .7; }
+.team-slot.empty   { background: var(--gray); color: var(--muted); cursor: default; font-style: italic; font-weight: 600; }
+.team-slot[disabled]:not(.empty):not(.correct):not(.wrong) { cursor: default; }
+
+.team-seed {
+  font-size: .65rem;
+  background: rgba(0,0,0,.1);
+  border-radius: 3px;
+  padding: 0 3px;
+  min-width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.team-slot.picked .team-seed { background: rgba(255,255,255,.25); }
+.team-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── Center: FF + Championship ── */
+.bracket-center {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 180px;
+  min-width: 180px;
+  padding: .5rem .4rem;
+  background: #fff5f5;
+  border-left: 2px solid #f0c0c0;
+  border-right: 2px solid #f0c0c0;
+}
+.center-label { font-family: 'Fredoka One', cursive; font-size: 1rem; color: var(--red); text-align: center; padding: .4rem 0; }
+.ff-row       { flex: 1; display: flex; align-items: center; justify-content: center; }
+.ff-slot      { width: 100%; }
+.champ-row    { display: flex; flex-direction: column; align-items: center; gap: .4rem; padding: .75rem 0; }
+.champ-label  { font-family: 'Fredoka One', cursive; font-size: .95rem; color: var(--red); }
+.champ-slot   { width: 100%; }
+.ff-slot .team-slot, .champ-slot .team-slot { font-size: .8rem; min-height: 30px; padding: 5px 8px; }
+
+/* Round name labels via CSS attr */
+.round-col::before {
+  content: attr(data-round-name);
+  display: block;
+  font-size: .62rem;
+  font-weight: 800;
+  color: var(--muted);
+  text-align: center;
+  padding-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+/* ── Lock bar (sticky bottom) ── */
+.lock-bar {
+  position: sticky;
+  bottom: 0;
+  background: var(--white);
+  border-top: 2px solid var(--border);
+  padding: .75rem 1rem;
+  text-align: center;
+  z-index: 10;
+  box-shadow: 0 -4px 16px rgba(0,0,0,.08);
+}
+#lock-btn { display: none; }
+
+/* Tiebreaker section (shown when all 63 picks made) */
+#tiebreaker-section {
+  display: none;
+  margin-bottom: .85rem;
+  padding: .85rem 1rem;
+  background: #fff8f8;
+  border: 2px solid #f0c0c0;
+  border-radius: 14px;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: .85rem;
+}
+.tb-label {
+  display: block;
+  font-weight: 800;
+  font-size: 1rem;
+  margin-bottom: .5rem;
+  color: var(--text);
+}
+.tb-input {
+  font-family: 'Nunito', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 800;
+  padding: .4rem .85rem;
+  border: 2.5px solid var(--border);
+  border-radius: 12px;
+  width: 130px;
+  text-align: center;
+  outline: none;
+  transition: border-color .2s;
+}
+.tb-input:focus { border-color: var(--red); }
+
+.lock-bar .hint { font-size: .85rem; color: var(--muted); margin-top: .4rem; }
+
+/* ═══════════════════════════════════════════════════
+   PAGE 4 — LEADERBOARD
+═══════════════════════════════════════════════════ */
+.lb-header {
+  background: var(--red);
+  color: var(--white);
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+.lb-header h2 { font-family: 'Fredoka One', cursive; font-size: 1.5rem; }
+#lb-updated   { font-size: .8rem; opacity: .8; }
+
+/* Tabs */
+.lb-tabs-bar {
+  display: flex;
+  background: #fff0f0;
+  border-bottom: 2px solid var(--border);
+  overflow-x: auto;
+}
+.lb-tab {
+  flex: 1;
+  min-width: 110px;
+  padding: .65rem .75rem;
+  font-family: 'Nunito', sans-serif;
+  font-size: .95rem;
+  font-weight: 800;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  color: var(--muted);
+  transition: color .15s, border-color .15s;
+  white-space: nowrap;
+}
+.lb-tab:hover  { color: var(--red); }
+.lb-tab.active { color: var(--red); border-bottom-color: var(--red); }
+
+.lb-container { max-width: 720px; margin: 1.25rem auto; padding: 0 .75rem; }
+
+/* Score key */
+.score-key {
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--muted);
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: .5rem .85rem;
+  margin-bottom: .75rem;
+  text-align: center;
+}
+.score-key strong { color: var(--red); }
+
+/* Tiebreaker note */
+.lb-tb-note {
+  font-size: .82rem;
+  font-weight: 700;
+  color: #856404;
+  background: #fff3cd;
+  border: 1.5px solid #f0ad4e;
+  border-radius: 10px;
+  padding: .45rem .85rem;
+  margin-bottom: .75rem;
+  text-align: center;
+}
+
+/* Rows */
+.lb-row {
+  background: var(--white);
+  border-radius: 14px;
+  border: 1.5px solid var(--border);
+  margin-bottom: .75rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+  overflow: hidden;
+}
+.lb-main {
+  display: flex;
+  align-items: center;
+  padding: .85rem 1rem;
+  gap: .5rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background .12s;
+}
+.lb-main:hover { background: #fff8f8; }
+
+.lb-rank        { font-family: 'Fredoka One', cursive; font-size: 1.3rem; min-width: 2.2rem; }
+.lb-type-emoji  { margin-right: .25rem; font-size: .95rem; }
+.lb-name        { font-weight: 800; font-size: 1rem; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-champion    { font-size: .82rem; color: var(--muted); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-tiebreaker  { font-size: .78rem; color: var(--muted); font-weight: 700; white-space: nowrap; }
+.tb-diff        { font-size: .7rem; font-weight: 600; color: #856404; }
+.lb-score       { font-family: 'Fredoka One', cursive; font-size: 1.2rem; color: var(--red); white-space: nowrap; }
+.lb-expand      { color: var(--muted); font-size: .85rem; margin-left: .15rem; transition: transform .2s; flex-shrink: 0; }
+
+.lb-detail {
+  border-top: 1.5px solid var(--border);
+  background: #fafafa;
+  padding: 1rem;
+}
+
+/* Pick chips */
+.picks-detail  { display: flex; flex-direction: column; gap: .75rem; }
+.picks-round   { }
+.picks-round-label {
+  font-weight: 800;
+  font-size: .82rem;
+  color: var(--red);
+  margin-bottom: .3rem;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+.picks-list { display: flex; flex-wrap: wrap; gap: .35rem; }
+.pick-chip      { font-size: .78rem; font-weight: 700; padding: .2rem .55rem; border-radius: 20px; border: 1.5px solid var(--border); background: var(--white); }
+.pick-correct   { background: #d4edda; border-color: #28a745; color: #155724; }
+.pick-wrong     { background: #f8d7da; border-color: #dc3545; color: #721c24; text-decoration: line-through; }
+.pick-pending   { background: #fff3cd; border-color: #f0ad4e; color: #856404; }
+
+.lb-actions {
+  display: flex;
+  gap: .75rem;
+  justify-content: center;
+  padding: 1rem;
+  flex-wrap: wrap;
+}
+
+/* ── Responsive ── */
+@media (max-width: 580px) {
+  .lb-hide-sm { display: none; }
+  .welcome-card { margin: -1.5rem .75rem 1.5rem; }
+  .type-card { width: 155px; min-height: 155px; }
+  .type-card .tc-emoji { font-size: 2.4rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     PAGE 1: WELCOME
+══════════════════════════════════════════ -->
+<div id="page-welcome" class="page active">
+  <header class="site-header">
+    <span style="font-size:1.8rem">🦡</span>
+    <span class="logo">Future Badgers Bracket Challenge</span>
+  </header>
+
+  <div class="hero-banner">
+    <span class="big-badger">🦡</span>
+    <h1>Future Badgers<br>Bracket Challenge!</h1>
+    <p>Pick your winners and climb the leaderboard! 🏀</p>
+  </div>
+
+  <div class="welcome-card">
+    <label for="nickname-input">What's your nickname?</label>
+    <input
+      type="text"
+      id="nickname-input"
+      placeholder="e.g. HoopStar99"
+      maxlength="20"
+      autocomplete="off"
+      autocorrect="off"
+      spellcheck="false"
+    >
+    <div class="nickname-error" id="nickname-error"></div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary btn-lg" onclick="handleContinue()">
+        Continue →
+      </button>
+      <button class="btn btn-secondary" onclick="handleViewLeaderboard()">
+        🏆 View Leaderboard
+      </button>
+    </div>
+
+    <div class="rules">
+      <h3>How Points Work</h3>
+      <ul>
+        <li>Round of 64: <strong>1 point</strong></li>
+        <li>Round of 32: <strong>2 points</strong></li>
+        <li>Sweet 16: <strong>4 points</strong></li>
+        <li>Elite 8: <strong>8 points</strong></li>
+        <li>Final Four: <strong>16 points</strong></li>
+        <li>Championship: <strong>32 points</strong> — Max: <strong>192 pts</strong></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE 2: TYPE SELECT
+══════════════════════════════════════════ -->
+<div id="page-type-select" class="page">
+  <header class="site-header">
+    <button class="btn btn-secondary" style="padding:.35rem .85rem;font-size:.9rem" onclick="showPage('page-welcome')">← Back</button>
+    <span class="logo" style="font-size:1.25rem">Future Badgers Bracket</span>
+  </header>
+
+  <div class="type-select-body">
+    <h2>Are you a Badger? 🦡</h2>
+    <p>Tell us who you are so we can sort the leaderboard!</p>
+
+    <div class="type-cards">
+      <button class="type-card" onclick="selectType('badger')">
+        <span class="tc-emoji">🦡👴</span>
+        <span class="tc-title">Badger</span>
+        <span class="tc-sub">I'm a grown-up</span>
+      </button>
+      <button class="type-card" onclick="selectType('future_badger')">
+        <span class="tc-emoji">🦡👶</span>
+        <span class="tc-title">Future Badger</span>
+        <span class="tc-sub">I'm a kid</span>
+      </button>
+    </div>
+
+    <div class="type-loading" id="type-loading">Checking your nickname… 🦡</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE 3: BRACKET PICKER
+══════════════════════════════════════════ -->
+<div id="page-bracket" class="page">
+  <div class="bracket-header">
+    <button class="btn btn-secondary" style="padding:.4rem 1rem;font-size:.9rem" onclick="showPage('page-welcome')">← Back</button>
+    <h2>🦡 Pick Your Bracket!</h2>
+    <span id="bracket-player-name"></span>
+  </div>
+
+  <div class="bracket-tip">
+    👆 Tap a team name to pick the winner — go all the way through the Championship!
+  </div>
+
+  <div class="bracket-scroll-wrapper">
+    <div id="bracket-scroll">
+      <div class="loading">Loading teams… 🦡</div>
+    </div>
+  </div>
+
+  <div class="lock-bar">
+    <div id="tiebreaker-section">
+      <label class="tb-label" for="tiebreaker-input">
+        🏀 How many 3-pointers will Wisconsin make in the whole tournament?
+      </label>
+      <input
+        type="number"
+        id="tiebreaker-input"
+        class="tb-input"
+        min="0"
+        max="200"
+        placeholder="0 – 200"
+      >
+    </div>
+    <button id="lock-btn" class="btn btn-primary btn-lg" onclick="lockBracket()">
+      🔒 Lock In My Bracket!
+    </button>
+    <div class="hint" id="lock-hint">Pick all games to unlock the submit button!</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE 4: LEADERBOARD
+══════════════════════════════════════════ -->
+<div id="page-leaderboard" class="page">
+  <div class="lb-header">
+    <h2>🏆 Leaderboard</h2>
+    <span id="lb-updated"></span>
+  </div>
+
+  <div class="lb-tabs-bar">
+    <button class="lb-tab active" data-tab="overall"        onclick="setLbTab('overall')">🦡 Overall</button>
+    <button class="lb-tab"        data-tab="badger"         onclick="setLbTab('badger')">🦡👴 Badgers</button>
+    <button class="lb-tab"        data-tab="future_badger"  onclick="setLbTab('future_badger')">🦡👶 Future Badgers</button>
+  </div>
+
+  <div class="lb-container">
+    <div class="score-key">
+      R64: <strong>1pt</strong> · R32: <strong>2pt</strong> · S16: <strong>4pt</strong> ·
+      E8: <strong>8pt</strong> · FF: <strong>16pt</strong> · Champ: <strong>32pt</strong> ·
+      Max: <strong>192 pts</strong>
+    </div>
+    <div class="lb-tb-note" id="lb-tb-note" style="display:none"></div>
+    <div id="leaderboard-list">
+      <div class="loading">Loading scores… 🦡</div>
+    </div>
+    <div class="lb-actions">
+      <button class="btn btn-primary"   onclick="handleContinue()">🦡 Fill Out My Bracket</button>
+      <button class="btn btn-secondary" onclick="initLeaderboard()">🔄 Refresh</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCRIPTS
+══════════════════════════════════════════ -->
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script src="bracket.js"></script>
+<script src="leaderboard.js"></script>
+<script>
+// ── Page navigation ──────────────────────────────────────
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ── Welcome: Continue button → type select ──────────────
+
+function handleContinue() {
+  const input    = document.getElementById('nickname-input');
+  const errorEl  = document.getElementById('nickname-error');
+  const nickname = (input?.value || '').trim();
+
+  if (errorEl) errorEl.style.display = 'none';
+
+  if (!nickname) {
+    showPage('page-welcome');
+    setTimeout(() => {
+      document.getElementById('nickname-input').focus();
+      document.getElementById('nickname-input').placeholder = '⬆ Enter your nickname first!';
+    }, 50);
+    return;
+  }
+
+  showPage('page-type-select');
+}
+
+// ── Type select → bracket ────────────────────────────────
+
+function selectType(type) {
+  const nickname   = (document.getElementById('nickname-input')?.value || '').trim();
+  const loadingEl  = document.getElementById('type-loading');
+  const cards      = document.querySelectorAll('.type-card');
+
+  if (!nickname) { showPage('page-welcome'); return; }
+
+  // Disable cards while loading
+  cards.forEach(c => c.disabled = true);
+  if (loadingEl) loadingEl.style.display = 'block';
+
+  initBracket(nickname, type).finally(() => {
+    cards.forEach(c => c.disabled = false);
+    if (loadingEl) loadingEl.style.display = 'none';
+  });
+}
+
+// ── Leaderboard shortcut ─────────────────────────────────
+
+function handleViewLeaderboard() {
+  showPage('page-leaderboard');
+  initLeaderboard();
+}
+
+// ── Enter on nickname field ───────────────────────────────
+
+document.getElementById('nickname-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') handleContinue();
+});
+
+// ── Add round labels to bracket columns after render ─────
+
+const ROUND_SHORT = ['R64','R32','S16','E8','FF','Champ'];
+const _origRenderBracket = renderBracket;
+window.renderBracket = function () {
+  _origRenderBracket();
+  document.querySelectorAll('.round-col[data-round]').forEach(col => {
+    const r = parseInt(col.dataset.round);
+    col.dataset.roundName = ROUND_SHORT[r] || '';
+  });
+  const made = userPicks.filter(p => p !== null).length;
+  const hint = document.getElementById('lock-hint');
+  if (hint) hint.textContent = made === 63 ? 'All picks done! Fill in your tiebreaker and lock it in 🎉' : `${made} / 63 picks made`;
+};
+</script>
+</body>
+</html>
