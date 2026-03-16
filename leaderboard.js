@@ -315,10 +315,9 @@ function _renderAwards(allEntries, results, bdata) {
   const futureB = topOf(allEntries.filter(e => e.type === 'future_badger'));
 
   function winnerLine(winners) {
-    if (!visible) return `<div class="award-winner tbd">Filling out brackets...</div>`;
-    if (!winners.length) return `<div class="award-winner tbd">No entries yet</div>`;
+    if (!visible || !winners.length) return `<div class="award-winner tbd">Winner TBD</div>`;
     return winners.map(w =>
-      `<div class="award-winner">${_typeEmojiAward(w.type)} ${_escLb(w.nickname)}</div>`
+      `<div class="award-winner">${_escLb(w.nickname)}</div>`
     ).join('');
   }
 
@@ -336,20 +335,26 @@ function _renderAwards(allEntries, results, bdata) {
       : '';
   }
 
-  function card(title, winners, isOverall) {
+  function prizeLine(prize, sub) {
+    const subHTML = sub ? ` <span class="award-prize-sub">${sub}</span>` : '';
+    return `<div class="award-prize">${prize}${subHTML}</div>`;
+  }
+
+  function card({ title, icon, prize, sub, winners, isOverall }) {
     const highlight = crowned && isOverall && winners.length > 0;
     return `<div class="award-card${highlight ? ' crowned' : ''}">
-      <div class="award-title">${title}</div>
+      <div class="award-title">${icon} ${title}</div>
       ${winnerLine(winners)}
       ${metaLine(winners)}
       ${champLine(winners)}
+      ${prizeLine(prize, sub)}
     </div>`;
   }
 
   el.innerHTML = `<div class="awards-grid">
-    ${card('🏆 Overall Champion', overall, true)}
-    ${card('Top Badger Alum',     alums,   false)}
-    ${card('Top Future Badger',   futureB, false)}
+    ${card({ title: 'Overall Champion', icon: '🏈', prize: '4-Pack of Badger Football Tickets',    sub: '(Sept 12 or Sept 19 game)', winners: overall, isOverall: true  })}
+    ${card({ title: 'Top Badger Alum',  icon: '🍺', prize: '12-Pack of Badger NIL Beer',           sub: '',                          winners: alums,   isOverall: false })}
+    ${card({ title: 'Top Future Badger',icon: '🃏', prize: 'Badger Football Card Pack + Box of Cards', sub: '(Sport of their choosing)', winners: futureB, isOverall: false })}
   </div>`;
   el.style.display = 'block';
 }
