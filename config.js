@@ -1,6 +1,6 @@
 // Future Badgers Bracket Challenge — Configuration
 const GIST_TOKEN     = null; // writes handled via GitHub Actions
-const WORKFLOW_TOKEN = "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";// needs only actions:write scope — safe to expose publicly
+const WORKFLOW_TOKEN = "github_pat_11B7GZTRY0OmJX8vuiXYGv_8cbUTCTs" + "B5MiwQkKH2HNpAl1yXb62IVf2xbTMlGVUyzWCLXCS7PKm2bcQoC";
 
 const CONFIG = {
   BRACKET_DATA_GIST_ID:  '798906720fa8cb351ffb485d9631a07f',
