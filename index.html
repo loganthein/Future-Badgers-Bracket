@@ -744,81 +744,6 @@ body {
   flex-wrap: wrap;
 }
 
-/* ═══════════════════════════════════════════════════
-   ADMIN SETUP
-═══════════════════════════════════════════════════ */
-#page-admin-setup {
-  min-height: 100vh;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  background: var(--red);
-  padding: 2rem 1rem;
-}
-#page-admin-setup.active { display: flex; }
-
-.admin-card {
-  background: var(--white);
-  border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.2);
-  padding: 2.25rem 2rem;
-  width: 100%;
-  max-width: 400px;
-  text-align: center;
-}
-.admin-card h2 {
-  font-family: 'Nunito', sans-serif;
-  font-weight: 800;
-  font-size: 1.8rem;
-  color: var(--red);
-  margin-bottom: .35rem;
-}
-.admin-card p {
-  font-size: .92rem;
-  color: var(--muted);
-  margin-bottom: 1.5rem;
-  line-height: 1.5;
-}
-.admin-card label {
-  display: block;
-  font-weight: 800;
-  font-size: .95rem;
-  text-align: left;
-  margin-bottom: .4rem;
-}
-.admin-card input[type="password"] {
-  width: 100%;
-  font-family: 'Nunito', sans-serif;
-  font-size: 1rem;
-  font-weight: 600;
-  padding: .7rem 1rem;
-  border: 2px solid var(--border);
-  border-radius: 8px;
-  outline: none;
-  transition: border-color .2s;
-  margin-bottom: 1rem;
-  letter-spacing: .05em;
-}
-.admin-card input[type="password"]:focus { border-color: var(--red); }
-.admin-card .admin-error {
-  color: var(--red);
-  font-weight: 700;
-  font-size: .88rem;
-  margin-bottom: .75rem;
-  display: none;
-}
-
-/* Reset token link (subtle footer link on welcome page) */
-.reset-token-link {
-  display: block;
-  text-align: center;
-  margin-top: 1.25rem;
-  font-size: .75rem;
-  color: #ccc;
-  cursor: pointer;
-  text-decoration: underline;
-}
-.reset-token-link:hover { color: var(--muted); }
 
 /* ── Responsive ── */
 @media (max-width: 580px) {
@@ -833,28 +758,6 @@ body {
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════
-     PAGE 0: ADMIN SETUP (shown if no gist_token in localStorage)
-══════════════════════════════════════════ -->
-<div id="page-admin-setup" class="page">
-  <div class="admin-card">
-    <h2>Admin Setup</h2>
-    <p>Enter your GitHub Gist token to enable bracket saving and loading.<br>
-       This is stored only in your browser — never in the code.</p>
-    <label for="admin-token-input">Enter Gist Token</label>
-    <input
-      type="password"
-      id="admin-token-input"
-      placeholder="ghp_…"
-      autocomplete="off"
-      spellcheck="false"
-    >
-    <div class="admin-error" id="admin-error">Please enter a token before continuing.</div>
-    <button class="btn btn-primary" style="width:100%;font-size:1.1rem" onclick="saveAdminToken()">
-      Save &amp; Continue
-    </button>
-  </div>
-</div>
 
 <!-- ══════════════════════════════════════════
      PAGE 1: WELCOME
@@ -897,8 +800,6 @@ body {
         View Leaderboard
       </button>
     </div>
-
-    <span class="reset-token-link" onclick="resetAdminToken()">Reset Gist Token</span>
 
     <div class="rules">
       <h3>How Points Work</h3>
@@ -1048,40 +949,8 @@ body {
 <script src="bracket.js"></script>
 <script src="leaderboard.js"></script>
 <script>
-// ── Admin token setup ────────────────────────────────────
-
-function saveAdminToken() {
-  const input = document.getElementById('admin-token-input');
-  const token = (input?.value || '').trim();
-  const errEl = document.getElementById('admin-error');
-  if (!token) {
-    errEl.style.display = 'block';
-    input?.focus();
-    return;
-  }
-  localStorage.setItem('gist_token', token);
-  location.reload();
-}
-
-function resetAdminToken() {
-  if (confirm('Clear your saved Gist token? The admin setup screen will appear on next load.')) {
-    localStorage.removeItem('gist_token');
-    location.reload();
-  }
-}
-
-// Check for token on load — show admin setup if missing
-(function checkToken() {
-  if (!localStorage.getItem('gist_token')) {
-    document.getElementById('page-admin-setup').classList.add('active');
-    document.getElementById('admin-token-input')?.addEventListener('keydown', e => {
-      if (e.key === 'Enter') saveAdminToken();
-    });
-    return; // don't show any other page
-  }
-  // Token exists — show welcome (default active)
-  document.getElementById('page-welcome').classList.add('active');
-})();
+// Show welcome on load
+document.getElementById('page-welcome').classList.add('active');
 
 // ── Page navigation ──────────────────────────────────────
 

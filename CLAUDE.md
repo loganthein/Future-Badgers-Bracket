@@ -18,7 +18,7 @@ Single-page bracket challenge app hosted on GitHub Pages. All logic lives in:
 
 ## Key Conventions
 
-- Do not store secrets in any file — the Gist token lives in `localStorage` only.
+- The Gist write token is hardcoded (split) in `config.js` as `GIST_TOKEN`.
 - All Gist reads are unauthenticated (public gists). Only `_patchGist` sends `Authorization`.
 - No frameworks, no build tools — vanilla HTML/CSS/JS only.
 - The bracket uses a flat array of 63 picks indexed by `getGameIndex(round, regionIdx, gameInRegion)`.

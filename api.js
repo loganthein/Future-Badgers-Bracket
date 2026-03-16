@@ -12,7 +12,7 @@ async function _patchGist(gistId, filename, content) {
   const resp = await fetch(`https://api.github.com/gists/${gistId}`, {
     method: 'PATCH',
     headers: {
-      'Authorization': `token ${CONFIG.GIST_TOKEN}`,
+      'Authorization': `token ${GIST_TOKEN}`,
       'Content-Type': 'application/json',
       'Accept': 'application/vnd.github.v3+json',
     },
