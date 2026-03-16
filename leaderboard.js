@@ -36,7 +36,28 @@ function setLbTab(tab) {
   document.querySelectorAll('.lb-tab').forEach(t =>
     t.classList.toggle('active', t.dataset.tab === tab)
   );
-  if (_cachedEntries) _renderEntries(_cachedEntries, _cachedResults, _cachedBdata);
+
+  const isBracket = tab === 'bracket';
+  const els = {
+    list:    document.getElementById('leaderboard-list'),
+    bracket: document.getElementById('lb-bracket-view'),
+    key:     document.querySelector('#page-leaderboard .score-key'),
+    tbNote:  document.getElementById('lb-tb-note'),
+    actions: document.querySelector('#page-leaderboard .lb-actions'),
+    awards:  document.getElementById('awards-section'),
+  };
+  if (els.list)    els.list.style.display    = isBracket ? 'none' : '';
+  if (els.bracket) els.bracket.style.display = isBracket ? 'block' : 'none';
+  if (els.key)     els.key.style.display     = isBracket ? 'none' : '';
+  if (els.actions) els.actions.style.display = isBracket ? 'none' : '';
+  if (els.awards)  els.awards.style.display  = isBracket ? 'none' : (els.awards.innerHTML ? 'block' : 'none');
+
+  if (isBracket) {
+    if (_cachedResults && _cachedBdata) renderLbBracket(_cachedResults, _cachedBdata);
+    else if (els.bracket) els.bracket.innerHTML = '<div class="loading">Loading bracket…</div>';
+  } else {
+    if (_cachedEntries) _renderEntries(_cachedEntries, _cachedResults, _cachedBdata);
+  }
 }
 
 // ── Load + refresh ─────────────────────────────────────────
@@ -93,7 +114,8 @@ async function _refreshLeaderboard() {
   _cachedBdata   = bdata;
 
   _renderAwards(entries, results, bdata);
-  _renderEntries(entries, results, bdata);
+  if (_currentLbTab === 'bracket') renderLbBracket(results, bdata);
+  else _renderEntries(entries, results, bdata);
   document.getElementById('lb-updated').textContent = `Last updated: ${new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}`;
 }
 
@@ -417,6 +439,98 @@ function _buildPicksDetail(picks, results, bdata) {
   html += '</div>';
   bracketData = prevBD;
   return html;
+}
+
+// ── Read-only results bracket (Bracket tab on leaderboard) ──
+
+function renderLbBracket(results, bdata) {
+  const container = document.getElementById('lb-bracket-view');
+  if (!container) return;
+
+  const clickable = _picksVisible();
+
+  function seedOf(name) {
+    for (const r of REGIONS) {
+      const t = (bdata?.teams?.[r] || []).find(t => t.name === name);
+      if (t) return t.seed;
+    }
+    return null;
+  }
+
+  function slotHTML(name, winner) {
+    if (!name) return `<div class="lb-slot empty">TBD</div>`;
+    let cls = 'lb-slot';
+    if (name === winner)   cls += ' win';
+    else if (winner)       cls += ' lose';
+    const seed    = seedOf(name);
+    const badge   = seed ? `<span class="team-seed">${seed}</span>` : '';
+    const logoUrl = getTeamLogoUrl(name);
+    const logo    = logoUrl
+      ? `<img src="${logoUrl}" class="team-logo" alt="" onerror="this.style.display='none'">`
+      : '';
+    return `<div class="${cls}">${badge}${logo}<span class="team-name">${_escLb(name)}</span></div>`;
+  }
+
+  function matchupHTML(idx) {
+    const [t1, t2] = _getGameParticipants(idx, results, bdata);
+    const winner   = results[idx];
+    const clickAttr = clickable
+      ? `onclick="showGameDist(${idx})" title="See who picked this game"`
+      : '';
+    return `<div class="matchup lb-matchup" data-game="${idx}" ${clickAttr}>
+      ${slotHTML(t1, winner)}${slotHTML(t2, winner)}
+    </div>`;
+  }
+
+  function roundCol(round, regionIdx) {
+    const ROUND_SHORT = ['R64', 'R32', 'S16', 'E8'];
+    const n = GAMES_PER_REGION[round];
+    let pairs = '';
+    for (let g = 0; g < n; g += 2) {
+      const idx1 = getGameIndex(round, regionIdx, g);
+      const idx2 = g + 1 < n ? getGameIndex(round, regionIdx, g + 1) : null;
+      pairs += `<div class="game-pair">${matchupHTML(idx1)}${idx2 !== null ? matchupHTML(idx2) : ''}</div>`;
+    }
+    return `<div class="round-col" data-round="${round}">
+      <div class="rcol-label">${ROUND_SHORT[round] || ''}</div>
+      <div class="rcol-games">${pairs}</div>
+    </div>`;
+  }
+
+  function regionHTML(regionIdx, isRight) {
+    const region     = REGIONS[regionIdx];
+    const roundOrder = isRight ? [3, 2, 1, 0] : [0, 1, 2, 3];
+    let cols = '';
+    for (const r of roundOrder) cols += roundCol(r, regionIdx);
+    return `<div class="region-block region-${region.toLowerCase()}">
+      <div class="region-label pos-${isRight ? 'right' : 'left'}">${region}</div>
+      <div class="region-rounds">${cols}</div>
+    </div>`;
+  }
+
+  container.innerHTML = `
+    <div class="bracket-scroll-wrapper">
+      <div class="bracket-inner">
+        <div class="bracket-half">
+          ${regionHTML(0, false)}
+          ${regionHTML(2, false)}
+        </div>
+        <div class="bracket-center">
+          <div class="center-label">Final Four</div>
+          <div class="ff-row"><div class="ff-slot">${matchupHTML(60)}</div></div>
+          <div class="champ-row">
+            <div class="champ-label">Championship</div>
+            <div class="champ-slot">${matchupHTML(62)}</div>
+          </div>
+          <div class="ff-row"><div class="ff-slot">${matchupHTML(61)}</div></div>
+        </div>
+        <div class="bracket-half">
+          ${regionHTML(1, true)}
+          ${regionHTML(3, true)}
+        </div>
+      </div>
+    </div>
+    ${clickable ? '<p class="lb-bracket-hint">Tap any game to see pick distribution</p>' : ''}`;
 }
 
 // ── Game pick distribution modal ────────────────────────────

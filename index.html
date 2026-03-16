@@ -1216,6 +1216,39 @@ body {
   flex-shrink: 0;
 }
 
+/* ── Leaderboard bracket view ── */
+.lb-matchup {
+  cursor: pointer;
+  border-radius: 6px;
+  transition: box-shadow .12s;
+}
+.lb-matchup:hover .lb-slot:not(.empty) { border-color: var(--red); }
+.lb-slot {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+  padding: 4px 6px;
+  background: var(--white);
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  font-size: .72rem;
+  font-weight: 700;
+  min-height: 26px;
+  line-height: 1.2;
+  pointer-events: none;
+}
+.lb-slot.win  { background: #d4edda; border-color: #28a745; color: #155724; }
+.lb-slot.lose { background: var(--offwhite); color: var(--muted); text-decoration: line-through; opacity: .55; }
+.lb-slot.empty { background: var(--gray); color: var(--muted); font-style: italic; font-weight: 600; }
+.lb-bracket-hint {
+  text-align: center;
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--muted);
+  padding: .6rem 0 .25rem;
+}
+
 /* ── Test mode banner ── */
 .test-banner {
   position: fixed;
@@ -1527,6 +1560,7 @@ body {
     <button class="lb-tab active" data-tab="overall"        onclick="setLbTab('overall')">Overall</button>
     <button class="lb-tab"        data-tab="badger"         onclick="setLbTab('badger')">Badger Alums</button>
     <button class="lb-tab"        data-tab="future_badger"  onclick="setLbTab('future_badger')">Future Badgers</button>
+    <button class="lb-tab"        data-tab="bracket"        onclick="setLbTab('bracket')">Bracket</button>
   </div>
 
   <div class="lb-container">
@@ -1539,6 +1573,7 @@ body {
     <div id="leaderboard-list">
       <div class="loading">Loading scores...</div>
     </div>
+    <div id="lb-bracket-view" style="display:none"></div>
     <div class="lb-actions">
       <button class="btn btn-primary"   onclick="handleContinue()">Fill Out My Bracket</button>
       <button class="btn btn-secondary" onclick="initLeaderboard()">Refresh</button>
