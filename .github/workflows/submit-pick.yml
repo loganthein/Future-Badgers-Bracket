@@ -1,0 +1,73 @@
+name: Submit Bracket Pick
+
+on:
+  workflow_dispatch:
+    inputs:
+      nickname:
+        description: 'Player nickname'
+        required: true
+      type:
+        description: 'badger or future_badger'
+        required: true
+      picks:
+        description: 'JSON array of 63 team name strings'
+        required: true
+      tiebreaker:
+        description: 'Wisconsin 3-point guess (integer)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  save-pick:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update bracket-picks.json
+        env:
+          NICKNAME: ${{ github.event.inputs.nickname }}
+          TYPE: ${{ github.event.inputs.type }}
+          PICKS: ${{ github.event.inputs.picks }}
+          TIEBREAKER: ${{ github.event.inputs.tiebreaker }}
+        run: |
+          python3 - <<'PYEOF'
+          import json, os, datetime
+
+          path = 'bracket-picks.json'
+          try:
+            with open(path) as f:
+              data = json.load(f)
+          except Exception:
+            data = {}
+
+          nickname   = os.environ['NICKNAME'].strip()
+          user_type  = os.environ['TYPE'].strip()
+          picks_raw  = os.environ['PICKS'].strip()
+          tb_raw     = os.environ.get('TIEBREAKER', '').strip()
+
+          picks = json.loads(picks_raw)
+          tiebreaker = int(tb_raw) if tb_raw else None
+
+          data[nickname] = {
+            'picks':       picks,
+            'type':        user_type,
+            'tiebreaker':  tiebreaker,
+            'submittedAt': datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+          }
+
+          with open(path, 'w') as f:
+            json.dump(data, f, indent=2)
+
+          print(f'Saved pick for {nickname!r}')
+          PYEOF
+
+      - name: Commit and push
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add bracket-picks.json
+          git commit -m "Add bracket pick: ${{ github.event.inputs.nickname }}"
+          git push
