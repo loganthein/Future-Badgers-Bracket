@@ -312,7 +312,7 @@ function renderBracket() {
       <div class="center-label">Final Four</div>
       <div class="ff-row"><div class="ff-slot">${_matchupHTML(4, 0, 0, results)}</div></div>
       <div class="champ-row">
-        <div class="champ-label">🏆 Championship</div>
+        <div class="champ-label">Championship</div>
         <div class="champ-slot">${_matchupHTML(5, 0, 0, results)}</div>
       </div>
       <div class="ff-row"><div class="ff-slot">${_matchupHTML(4, 0, 1, results)}</div></div>
@@ -358,12 +358,12 @@ async function initBracket(nickname, type) {
   const tbInput = document.getElementById('tiebreaker-input');
   if (tbInput) tbInput.value = '';
 
-  const typeLabel = type === 'badger' ? '🦡👴' : '🦡👶';
-  document.getElementById('bracket-player-name').textContent = `${typeLabel} ${nickname}`;
+  const typeLabel = type === 'badger' ? 'Badger Alum' : 'Future Badger';
+  document.getElementById('bracket-player-name').textContent = `${typeLabel}: ${nickname}`;
   showPage('page-bracket');
 
   const container = document.getElementById('bracket-scroll');
-  container.innerHTML = '<div class="loading">Loading bracket… 🦡</div>';
+  container.innerHTML = '<div class="loading">Loading bracket...</div>';
 
   let bdata, existingPicks;
   try {
@@ -381,7 +381,7 @@ async function initBracket(nickname, type) {
     if (input) input.value = nickname;
     setTimeout(() => {
       document.getElementById('nickname-error').textContent =
-        `"${nickname}" is already taken! Try a different nickname. 😅`;
+        `"${nickname}" is already taken! Try a different nickname.`;
       document.getElementById('nickname-error').style.display = 'block';
       document.getElementById('nickname-input')?.focus();
     }, 50);
@@ -416,7 +416,7 @@ async function lockBracket() {
 
   const btn = document.getElementById('lock-btn');
   btn.disabled = true;
-  btn.textContent = 'Saving… 🦡';
+  btn.textContent = 'Saving...';
 
   try {
     // Final duplicate check right before write (race condition safety)
@@ -426,10 +426,10 @@ async function lockBracket() {
       const input = document.getElementById('nickname-input');
       if (input) input.value = currentNickname;
       document.getElementById('nickname-error').textContent =
-        `"${currentNickname}" was just taken by someone else! Try a different nickname. 😅`;
+        `"${currentNickname}" was just taken by someone else! Try a different nickname.`;
       document.getElementById('nickname-error').style.display = 'block';
       btn.disabled = false;
-      btn.textContent = '🔒 Lock In My Bracket!';
+      btn.textContent = 'Lock In My Bracket!';
       return;
     }
 
