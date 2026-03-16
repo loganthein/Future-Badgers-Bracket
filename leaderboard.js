@@ -3,11 +3,26 @@
 const PICKS_REVEAL_TIME = new Date('2026-03-19T17:00:00Z'); // Thursday Mar 19 11am CT
 function _picksVisible() { return new Date() >= PICKS_REVEAL_TIME; }
 
-let _leaderboardTimer = null;
-let _cachedEntries    = null;
-let _cachedResults    = null;
-let _cachedBdata      = null;
-let _currentLbTab     = 'overall';
+let _leaderboardTimer   = null;
+let _lbCdTimer          = null;
+let _cachedEntries      = null;
+let _cachedResults      = null;
+let _cachedBdata        = null;
+let _currentLbTab       = 'overall';
+
+function _startRefreshCd() {
+  clearInterval(_lbCdTimer);
+  const target = Date.now() + CONFIG.LEADERBOARD_REFRESH_MS;
+  _lbCdTimer = setInterval(function () {
+    const el     = document.getElementById('lb-refresh-cd');
+    if (!el) return;
+    const remain = Math.max(0, target - Date.now());
+    const m = Math.floor(remain / 60000);
+    const s = Math.floor((remain % 60000) / 1000);
+    el.textContent = ' · Refreshing in ' + m + ':' + String(s).padStart(2, '0');
+    if (remain <= 0) clearInterval(_lbCdTimer);
+  }, 1000);
+}
 
 const TYPE_LABEL = {
   badger:        'Badger Alum',
@@ -28,8 +43,13 @@ function setLbTab(tab) {
 
 async function initLeaderboard() {
   clearInterval(_leaderboardTimer);
+  clearInterval(_lbCdTimer);
   await _refreshLeaderboard();
-  _leaderboardTimer = setInterval(_refreshLeaderboard, CONFIG.LEADERBOARD_REFRESH_MS);
+  _startRefreshCd();
+  _leaderboardTimer = setInterval(async function () {
+    await _refreshLeaderboard();
+    _startRefreshCd();
+  }, CONFIG.LEADERBOARD_REFRESH_MS);
 }
 
 async function _refreshLeaderboard() {

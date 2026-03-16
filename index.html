@@ -267,13 +267,11 @@ body {
 }
 
 /* ── Mobile bracket UI (shown only under 768px) ── */
-.mobile-region-tabs,
-.mobile-progress { display: none; }
+.mobile-region-tabs { display: none; }
 
 @media (max-width: 767px) {
   /* Show mobile chrome, suppress desktop scroll */
   .mobile-region-tabs { display: flex; }
-  .mobile-progress    { display: block; }
   .bracket-scroll-wrapper { overflow-x: hidden; padding: 0 0 1rem; }
 
   /* Region tab strip */
@@ -303,18 +301,6 @@ body {
   .mrt-tab.done:not(.active) { color: #28a745; }
   .mrt-tab.done::after { content: ' ✓'; font-size: .75rem; }
   .mrt-tab:disabled { color: #ccc; cursor: not-allowed; }
-
-  /* Progress bar */
-  .mobile-progress {
-    padding: .35rem 1rem;
-    background: var(--offwhite);
-    font-size: .8rem;
-    font-weight: 700;
-    color: var(--muted);
-    text-align: center;
-    border-bottom: 1px solid var(--border);
-  }
-  .mobile-progress.all-done { color: #28a745; }
 
   /* Region content */
   .mobile-bracket-region { padding: .75rem .75rem 0; }
@@ -604,6 +590,62 @@ body {
 .champ-slot   { width: 100%; }
 .ff-slot .team-slot, .champ-slot .team-slot { font-size: .8rem; min-height: 30px; padding: 5px 8px; }
 
+/* FF spine — wraps both ff-rows + champ-row; vertical connecting line */
+.ff-spine {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.ff-spine::before {
+  content: '';
+  position: absolute;
+  width: 1px;
+  background: #ccc;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 20%;
+  height: 60%;
+  z-index: 0;
+}
+
+/* Champion logo box */
+.champ-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--white);
+  border: 2px solid var(--red);
+  border-radius: 10px;
+  padding: .5rem .5rem .35rem;
+  margin-bottom: .4rem;
+  box-shadow: var(--shadow);
+  text-align: center;
+  min-height: 72px;
+  position: relative;
+  z-index: 1;
+}
+.champ-hero.empty {
+  border-color: var(--border);
+  background: var(--offwhite);
+  font-size: 1.75rem;
+}
+.champ-hero-logo {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  margin-bottom: .25rem;
+}
+.champ-hero-name {
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: .72rem;
+  color: var(--text);
+  line-height: 1.2;
+  word-break: break-word;
+}
+
 /* Round name labels — actual DOM elements, not pseudo-elements (pseudo-elements consume
    flex height from .round-col and break the top:25%/height:50% connector math) */
 .rcol-label {
@@ -691,6 +733,40 @@ body {
 
 .lock-bar .hint { font-size: .85rem; color: var(--muted); margin-top: .4rem; }
 
+/* ── Pick progress bar ── */
+#pick-progress-wrap { margin-bottom: .5rem; }
+.progress-bar-track {
+  height: 7px;
+  background: #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: .35rem;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: var(--red);
+  border-radius: 4px;
+  transition: width .25s ease;
+}
+#pick-progress-text {
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: center;
+}
+#pick-progress-text.complete { color: var(--red); }
+
+/* ── Deadline countdown (welcome page) ── */
+.deadline-cd {
+  text-align: center;
+  font-size: .88rem;
+  font-weight: 700;
+  color: var(--muted);
+  margin-top: .85rem;
+  min-height: 1.4em;
+}
+.deadline-cd.locked { color: var(--red); }
+
 /* ═══════════════════════════════════════════════════
    PAGE 3b — SUCCESS / CONFIRMATION
 ═══════════════════════════════════════════════════ */
@@ -744,6 +820,7 @@ body {
 }
 .lb-header h2 { font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.5rem; }
 #lb-updated   { font-size: .8rem; opacity: .8; }
+#lb-refresh-cd { font-size: .8rem; opacity: .75; }
 
 /* Awards section */
 .awards-section {
@@ -1195,6 +1272,8 @@ body {
       </button>
     </div>
 
+    <div class="deadline-cd" id="deadline-countdown"></div>
+
     <div class="rules">
       <h3>How Points Work</h3>
       <ul>
@@ -1273,8 +1352,6 @@ body {
     <button class="mrt-tab"        data-region="3" onclick="setMobileRegion(3)">Midwest</button>
     <button class="mrt-tab mrt-ff" data-region="4" onclick="setMobileRegion(4)" id="mrt-ff-tab" disabled>Final Four</button>
   </div>
-  <div class="mobile-progress" id="mobile-progress">0 of 63 picks made</div>
-
   <div class="bracket-scroll-wrapper">
     <div id="bracket-scroll">
       <div class="loading">Loading teams...</div>
@@ -1282,6 +1359,12 @@ body {
   </div>
 
   <div class="lock-bar">
+    <div id="pick-progress-wrap">
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="pick-progress-fill" style="width:0%"></div>
+      </div>
+      <div id="pick-progress-text">0 of 63 picks made</div>
+    </div>
     <div id="tiebreaker-section">
       <label class="tb-label" for="tiebreaker-input">
         How many 3-pointers will Wisconsin make in the whole tournament?
@@ -1350,7 +1433,7 @@ body {
 <div id="page-leaderboard" class="page">
   <div class="lb-header">
     <h2>Leaderboard</h2>
-    <span id="lb-updated"></span>
+    <span><span id="lb-updated"></span><span id="lb-refresh-cd"></span></span>
   </div>
 
   <div id="awards-section" class="awards-section" style="display:none"></div>
@@ -1388,6 +1471,33 @@ body {
 <script>
 // Show welcome on load
 document.getElementById('page-welcome').classList.add('active');
+
+// ── Deadline countdown ────────────────────────────────
+const _BRACKET_DEADLINE = new Date('2026-03-19T17:00:00Z'); // Thu Mar 19 11am CT
+
+function _updateDeadlineCd() {
+  const el = document.getElementById('deadline-countdown');
+  if (!el) return;
+  const diff = _BRACKET_DEADLINE - Date.now();
+  if (diff <= 0) {
+    el.textContent = 'Brackets are locked! Check the leaderboard.';
+    el.classList.add('locked');
+    return;
+  }
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  const parts = [];
+  if (d > 0) parts.push(d + 'd');
+  if (h > 0 || d > 0) parts.push(h + 'h');
+  parts.push(m + 'm');
+  parts.push(String(s).padStart(2, '0') + 's');
+  el.textContent = 'Brackets lock in ' + parts.join(' ');
+  el.classList.remove('locked');
+}
+_updateDeadlineCd();
+setInterval(_updateDeadlineCd, 1000);
 
 // ── Leave-bracket guard ───────────────────────────────────
 
