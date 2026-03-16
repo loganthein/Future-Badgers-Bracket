@@ -22,7 +22,10 @@ const GAMES_PER_REGION = [8,  4,  2,  1];
 let _mobileRegion        = 0;   // 0-3 = region, 4 = Final Four
 let _mobileSlideDir      = null; // 'right' | 'left' | null
 
-function _isMobile() { return window.innerWidth < 768; }
+function _isMobile() {
+  const tabs = document.getElementById('mobile-region-tabs');
+  return tabs ? getComputedStyle(tabs).display !== 'none' : window.innerWidth < 768;
+}
 
 function _isRegionDone(regionIdx) {
   return userPicks[getGameIndex(3, regionIdx, 0)] !== null;
@@ -36,10 +39,8 @@ function setMobileRegion(idx) {
   if (idx === 4 && !_isFFUnlocked()) return;
   _mobileSlideDir = idx > _mobileRegion ? 'right' : 'left';
   _mobileRegion   = idx;
-  if (_isMobile()) {
-    renderBracket();
-    document.querySelector('.bracket-scroll-wrapper')?.scrollTo(0, 0);
-  }
+  renderBracket();
+  document.querySelector('.bracket-scroll-wrapper')?.scrollTo(0, 0);
   // Sync tab UI (active class)
   document.querySelectorAll('.mrt-tab').forEach((t, i) =>
     t.classList.toggle('active', i === idx)
