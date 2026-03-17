@@ -39,14 +39,16 @@ function setLbTab(tab) {
 
   const isBracket = tab === 'bracket';
   const els = {
-    list:    document.getElementById('leaderboard-list'),
-    bracket: document.getElementById('lb-bracket-view'),
-    key:     document.querySelector('#page-leaderboard .score-key'),
-    tbNote:  document.getElementById('lb-tb-note'),
-    actions: document.querySelector('#page-leaderboard .lb-actions'),
-    awards:  document.getElementById('awards-section'),
+    list:      document.getElementById('leaderboard-list'),
+    bracket:   document.getElementById('lb-bracket-view'),
+    key:       document.querySelector('#page-leaderboard .score-key'),
+    tbNote:    document.getElementById('lb-tb-note'),
+    actions:   document.querySelector('#page-leaderboard .lb-actions'),
+    awards:    document.getElementById('awards-section'),
+    container: document.querySelector('#page-leaderboard .lb-container'),
   };
   const printBtn = document.getElementById('lb-print-btn');
+  if (els.container) els.container.classList.toggle('bracket-wide', isBracket);
   if (els.list)    els.list.style.display    = isBracket ? 'none' : '';
   if (els.bracket) els.bracket.style.display = isBracket ? 'block' : 'none';
   if (els.key)     els.key.style.display     = isBracket ? 'none' : '';
