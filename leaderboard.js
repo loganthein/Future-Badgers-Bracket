@@ -658,6 +658,78 @@ function printLbBracket() {
   window.print();
 }
 
+// Prints whatever bracket is currently selected in the leaderboard bracket tab
+function printLbCurrentBracket() {
+  const entries = _cachedEntries || [];
+  const bdata   = _cachedBdata;
+
+  const selEntry = _lbBracketPerson
+    ? entries.find(e => e.nickname === _lbBracketPerson)
+    : null;
+
+  const picks    = selEntry ? selEntry.picks : new Array(63).fill(null);
+  const nickname = selEntry ? selEntry.nickname : 'Results';
+  const score    = selEntry ? ` — ${selEntry.score} pts` : '';
+
+  function esc(s) {
+    return (s || '').replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  const bracketPage = buildPrintBracketHTML(picks, bdata, esc);
+
+  const html = `<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<title>Bracket – ${esc(nickname)}</title>
+<style>
+@page { size: landscape; margin: .35in; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, Helvetica, sans-serif; color: #1a1a1a; background: #fff; font-size: 13px; }
+.header { background: #C5050C; color: #fff; padding: 14px 20px 12px; }
+.header h1 { font-size: 18px; font-weight: 900; }
+.header .meta { font-size: 12px; margin-top: 5px; opacity: .92; }
+h2 { font-size: 14px; font-weight: 900; color: #C5050C; margin: 12px 0 8px; }
+/* bracket styles */
+.bkt-wrap { display: flex; gap: 0; align-items: stretch; width: 100%; }
+.bkt-table { flex: 1; border-collapse: collapse; table-layout: fixed; min-width: 0; }
+.bs { font-size: 8.5px; font-weight: 700; padding: 2px 3px; border: 1px solid #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; vertical-align: middle; height: 17px; line-height: 1.1; }
+.bs.r64 { background: #fff; color: #333; min-width: 90px; }
+.bs.pk { background: #f4f4f4; color: #333; }
+.bs.ff-entry { background: #fff3cd; font-weight: 800; color: #856404; }
+.bs.tbd { color: #aaa; font-style: italic; font-weight: 400; }
+.bseed { display: inline-block; background: rgba(0,0,0,.1); border-radius: 2px; padding: 0 2px; font-size: 7.5px; margin-right: 2px; min-width: 12px; text-align: center; }
+.regnm td { font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; color: #fff; background: #C5050C; padding: 3px 5px; }
+.bc-center { width: 160px; min-width: 160px; display: flex; flex-direction: column; border-left: 1px solid #ddd; border-right: 1px solid #ddd; background: #fafafa; }
+.bc-ff-label { text-align: center; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; color: #C5050C; padding: 4px 0 2px; border-bottom: 1px solid #eee; }
+.bc-ff-top, .bc-ff-bot { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 4px 6px; }
+.bc-ff-bot { flex-direction: column-reverse; }
+.bc-ff-group { display: flex; flex-direction: column; gap: 1px; }
+.bc-ff-winner { margin: 2px 0; }
+.bc-champ { flex-shrink: 0; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; background: #fff3cd; padding: 4px 6px; display: flex; flex-direction: column; gap: 2px; }
+.bc-champ-label { font-size: 9px; font-weight: 900; text-transform: uppercase; color: #856404; text-align: center; margin-bottom: 1px; }
+.bc-champ-winner-label { font-size: 8px; font-weight: 800; color: #C5050C; text-align: center; margin-top: 2px; }
+.ff-sl { font-size: 9px; font-weight: 700; padding: 2px 4px; border: 1px solid #ccc; border-radius: 3px; background: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ff-sl.tbd { color: #aaa; font-style: italic; }
+@media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Future Badgers Bracket Challenge</h1>
+  <div class="meta"><strong>${esc(nickname)}</strong>${esc(score)}</div>
+</div>
+<div style="padding: 0 0 8px">
+  ${bracketPage}
+</div>
+<script>window.onload = function () { window.print(); }<\/script>
+</body></html>`;
+
+  const w = window.open('', '_blank');
+  if (w) { w.document.write(html); w.document.close(); }
+  else   { alert('Pop-up blocked! Please allow pop-ups for this site to print.'); }
+}
+
 // ── Game pick distribution modal ────────────────────────────
 
 function showGameDist(gameIdx) {
