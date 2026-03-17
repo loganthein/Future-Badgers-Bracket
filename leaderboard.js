@@ -36,7 +36,28 @@ function setLbTab(tab) {
   document.querySelectorAll('.lb-tab').forEach(t =>
     t.classList.toggle('active', t.dataset.tab === tab)
   );
-  if (_cachedEntries) _renderEntries(_cachedEntries, _cachedResults, _cachedBdata);
+
+  const isBracket = tab === 'bracket';
+  const els = {
+    list:    document.getElementById('leaderboard-list'),
+    bracket: document.getElementById('lb-bracket-view'),
+    key:     document.querySelector('#page-leaderboard .score-key'),
+    tbNote:  document.getElementById('lb-tb-note'),
+    actions: document.querySelector('#page-leaderboard .lb-actions'),
+    awards:  document.getElementById('awards-section'),
+  };
+  if (els.list)    els.list.style.display    = isBracket ? 'none' : '';
+  if (els.bracket) els.bracket.style.display = isBracket ? 'block' : 'none';
+  if (els.key)     els.key.style.display     = isBracket ? 'none' : '';
+  if (els.actions) els.actions.style.display = isBracket ? 'none' : '';
+  if (els.awards)  els.awards.style.display  = isBracket ? 'none' : (els.awards.innerHTML ? 'block' : 'none');
+
+  if (isBracket) {
+    if (_cachedResults && _cachedBdata) renderLbBracket(_cachedResults, _cachedBdata);
+    else if (els.bracket) els.bracket.innerHTML = '<div class="loading">Loading bracket…</div>';
+  } else {
+    if (_cachedEntries) _renderEntries(_cachedEntries, _cachedResults, _cachedBdata);
+  }
 }
 
 // ── Load + refresh ─────────────────────────────────────────
@@ -93,7 +114,8 @@ async function _refreshLeaderboard() {
   _cachedBdata   = bdata;
 
   _renderAwards(entries, results, bdata);
-  _renderEntries(entries, results, bdata);
+  if (_currentLbTab === 'bracket') renderLbBracket(results, bdata);
+  else _renderEntries(entries, results, bdata);
   document.getElementById('lb-updated').textContent = `Last updated: ${new Date().toLocaleTimeString([], {hour:'numeric',minute:'2-digit'})}`;
 }
 
@@ -403,7 +425,7 @@ function _buildPicksDetail(picks, results, bdata) {
       const actual = results[i];
       if (!pick) continue;
       const status = actual ? (pick === actual ? 'correct' : 'wrong') : '';
-      roundPicks.push({ pick, status });
+      roundPicks.push({ pick, status, gameIdx: i });
     }
 
     if (roundPicks.length === 0) continue;
@@ -411,9 +433,9 @@ function _buildPicksDetail(picks, results, bdata) {
     html += `<div class="picks-round">
       <div class="picks-round-label">${ROUND_NAMES[r]} (${ROUND_POINTS[r]} pt${ROUND_POINTS[r] > 1 ? 's' : ''})</div>
       <div class="picks-list">`;
-    roundPicks.forEach(({ pick, status }) => {
+    roundPicks.forEach(({ pick, status, gameIdx }) => {
       const icon = status === 'correct' ? '✓' : status === 'wrong' ? '✗' : '';
-      html += `<span class="pick-chip pick-${status || 'pending'}">${icon} ${_escLb(pick)}</span>`;
+      html += `<span class="pick-chip pick-${status || 'pending'}" onclick="showGameDist(${gameIdx})" style="cursor:pointer" title="See who picked this">${icon} ${_escLb(pick)}</span>`;
     });
     html += '</div></div>';
   }
@@ -421,4 +443,242 @@ function _buildPicksDetail(picks, results, bdata) {
   html += '</div>';
   bracketData = prevBD;
   return html;
+}
+
+// ── Read-only results bracket (Bracket tab on leaderboard) ──
+
+let _lbBracketPerson = null; // selected nickname, or null for results-only
+
+function setLbBracketPerson(nickname) {
+  _lbBracketPerson = nickname || null;
+  if (_cachedResults && _cachedBdata) renderLbBracket(_cachedResults, _cachedBdata);
+}
+
+function renderLbBracket(results, bdata) {
+  const container = document.getElementById('lb-bracket-view');
+  if (!container) return;
+
+  const clickable = _picksVisible();
+  const entries   = _cachedEntries || [];
+
+  // Resolve selected person's picks
+  const selEntry   = _lbBracketPerson
+    ? entries.find(e => e.nickname === _lbBracketPerson)
+    : null;
+  const selPicks   = selEntry?.picks || null;
+
+  // Score summary for selected person
+  const selScore   = selEntry ? selEntry.score : null;
+  const selMax     = selEntry ? selEntry.maxAvailable : null;
+
+  function seedOf(name) {
+    for (const r of REGIONS) {
+      const t = (bdata?.teams?.[r] || []).find(t => t.name === name);
+      if (t) return t.seed;
+    }
+    return null;
+  }
+
+  function slotHTML(name, idx) {
+    const winner     = results[idx];
+    const personPick = selPicks ? selPicks[idx] : null;
+    if (!name) return `<div class="lb-slot empty">TBD</div>`;
+
+    let cls = 'lb-slot';
+    let icon = '';
+
+    if (selPicks) {
+      // Person-overlay mode
+      if (personPick === name && !winner)           { cls += ' lbs-pending'; }
+      else if (personPick === name && winner === name) { cls += ' lbs-correct'; icon = '✓ '; }
+      else if (personPick === name && winner && winner !== name) { cls += ' lbs-wrong'; icon = '✗ '; }
+      else if (winner === name)   cls += ' win';
+      else if (winner)            cls += ' lose';
+    } else {
+      if (winner === name)   cls += ' win';
+      else if (winner)       cls += ' lose';
+    }
+
+    const seed    = seedOf(name);
+    const badge   = seed ? `<span class="team-seed">${seed}</span>` : '';
+    const logoUrl = getTeamLogoUrl(name);
+    const logo    = logoUrl
+      ? `<img src="${logoUrl}" class="team-logo" alt="" onerror="this.style.display='none'">`
+      : '';
+    return `<div class="${cls}">${icon}${badge}${logo}<span class="team-name">${_escLb(name)}</span></div>`;
+  }
+
+  function matchupHTML(idx) {
+    const [t1, t2]  = _getGameParticipants(idx, results, bdata);
+    const clickAttr = clickable
+      ? `onclick="showGameDist(${idx})" title="See who picked this game"`
+      : '';
+    return `<div class="matchup lb-matchup" data-game="${idx}" ${clickAttr}>
+      ${slotHTML(t1, idx)}${slotHTML(t2, idx)}
+    </div>`;
+  }
+
+  function roundCol(round, regionIdx) {
+    const ROUND_SHORT = ['R64', 'R32', 'S16', 'E8'];
+    const n = GAMES_PER_REGION[round];
+    let pairs = '';
+    for (let g = 0; g < n; g += 2) {
+      const idx1 = getGameIndex(round, regionIdx, g);
+      const idx2 = g + 1 < n ? getGameIndex(round, regionIdx, g + 1) : null;
+      pairs += `<div class="game-pair">${matchupHTML(idx1)}${idx2 !== null ? matchupHTML(idx2) : ''}</div>`;
+    }
+    return `<div class="round-col" data-round="${round}">
+      <div class="rcol-label">${ROUND_SHORT[round] || ''}</div>
+      <div class="rcol-games">${pairs}</div>
+    </div>`;
+  }
+
+  function regionHTML(regionIdx, isRight) {
+    const region     = REGIONS[regionIdx];
+    const roundOrder = isRight ? [3, 2, 1, 0] : [0, 1, 2, 3];
+    let cols = '';
+    for (const r of roundOrder) cols += roundCol(r, regionIdx);
+    return `<div class="region-block region-${region.toLowerCase()}">
+      <div class="region-label pos-${isRight ? 'right' : 'left'}">${region}</div>
+      <div class="region-rounds">${cols}</div>
+    </div>`;
+  }
+
+  // Dropdown options — sort entries by score desc then alpha
+  const sorted = [...entries].sort((a, b) =>
+    b.score !== a.score ? b.score - a.score : a.nickname.localeCompare(b.nickname)
+  );
+  const options = sorted.map(e => {
+    const label = clickable
+      ? `${_escLb(e.nickname)} (${e.score} pts)`
+      : _escLb(e.nickname);
+    const sel = e.nickname === _lbBracketPerson ? ' selected' : '';
+    return `<option value="${_escLb(e.nickname)}"${sel}>${label}</option>`;
+  }).join('');
+
+  const scoreBadge = selEntry && clickable
+    ? `<span class="lb-bracket-score">${selScore} pts · Max: ${selMax}</span>`
+    : '';
+
+  const legend = selPicks && clickable
+    ? `<div class="lb-bracket-legend">
+        <span class="lbl-chip lbs-correct">✓ Correct</span>
+        <span class="lbl-chip lbs-wrong">✗ Wrong</span>
+        <span class="lbl-chip lbs-pending">Pending</span>
+        <span class="lbl-chip win">Won</span>
+      </div>`
+    : '';
+
+  container.innerHTML = `
+    <div class="lb-bracket-controls">
+      <select class="lb-bracket-select" onchange="setLbBracketPerson(this.value)">
+        <option value="">— Results only —</option>
+        ${options}
+      </select>
+      ${scoreBadge}
+    </div>
+    ${legend}
+    <div class="bracket-scroll-wrapper">
+      <div class="bracket-inner">
+        <div class="bracket-half">
+          ${regionHTML(0, false)}
+          ${regionHTML(2, false)}
+        </div>
+        <div class="bracket-center">
+          <div class="center-label">Final Four</div>
+          <div class="ff-row"><div class="ff-slot">${matchupHTML(60)}</div></div>
+          <div class="champ-row">
+            <div class="champ-label">Championship</div>
+            <div class="champ-slot">${matchupHTML(62)}</div>
+          </div>
+          <div class="ff-row"><div class="ff-slot">${matchupHTML(61)}</div></div>
+        </div>
+        <div class="bracket-half">
+          ${regionHTML(1, true)}
+          ${regionHTML(3, true)}
+        </div>
+      </div>
+    </div>
+    ${clickable ? '<p class="lb-bracket-hint">Tap any game to see pick distribution</p>' : ''}`;
+}
+
+// ── Game pick distribution modal ────────────────────────────
+
+function showGameDist(gameIdx) {
+  if (!_picksVisible()) return;
+  if (!_cachedEntries || !_cachedBdata) return;
+
+  const round     = getRoundFromIndex(gameIdx);
+  const results   = _cachedResults || new Array(63).fill(null);
+  const [t1, t2]  = _getGameParticipants(gameIdx, results, _cachedBdata);
+
+  const t1Pickers = [], t2Pickers = [];
+  for (const entry of _cachedEntries) {
+    const pick = entry.picks?.[gameIdx];
+    if (pick === t1) t1Pickers.push(entry.nickname);
+    else if (pick === t2) t2Pickers.push(entry.nickname);
+  }
+
+  const modal     = document.getElementById('game-dist-modal');
+  const titleEl   = document.getElementById('game-dist-title');
+  const subtitleEl = document.getElementById('game-dist-subtitle');
+  const bodyEl    = document.getElementById('game-dist-body');
+  if (!modal) return;
+
+  titleEl.textContent = ROUND_NAMES[round];
+  if (round < 4) {
+    const offset    = gameIdx - ROUND_OFFSETS[round];
+    const regionIdx = Math.floor(offset / GAMES_PER_REGION[round]);
+    subtitleEl.textContent = REGIONS[regionIdx] + ' Region';
+  } else if (round === 4) {
+    subtitleEl.textContent = gameIdx === 60 ? 'East vs South' : 'West vs Midwest';
+  } else {
+    subtitleEl.textContent = 'National Championship';
+  }
+
+  if (!t1 && !t2) {
+    bodyEl.innerHTML = '<div class="gd-locked">Teams not yet determined for this game.</div>';
+  } else {
+    const total  = t1Pickers.length + t2Pickers.length;
+    const t1pct  = total > 0 ? Math.round(t1Pickers.length / total * 100) : 0;
+    const t2pct  = total > 0 ? 100 - t1pct : 0;
+
+    function seedOf(name) {
+      for (const r of REGIONS) {
+        const t = (_cachedBdata?.teams?.[r] || []).find(t => t.name === name);
+        if (t) return t.seed;
+      }
+      return null;
+    }
+
+    function teamPanel(name, pickers, pct) {
+      if (!name) return `<div class="gd-team"><div class="gd-team-name">TBD</div><div class="gd-count">—</div></div>`;
+      const logoUrl = getTeamLogoUrl(name);
+      const logo    = logoUrl ? `<img src="${logoUrl}" width="22" height="22" alt="" onerror="this.style.display='none'" style="border-radius:3px;flex-shrink:0">` : '';
+      const seed    = seedOf(name);
+      const seedBadge = seed ? `<span class="gd-seed">${seed}</span>` : '';
+      const pickerItems = pickers.map(n => `<div class="gd-picker">${_escLb(n)}</div>`).join('');
+      return `<div class="gd-team">
+        <div class="gd-team-name">${logo}${seedBadge}${_escLb(name)}</div>
+        <div class="gd-count">${pickers.length} pick${pickers.length !== 1 ? 's' : ''} · ${pct}%</div>
+        <div class="gd-bar"><div class="gd-bar-fill" style="width:${pct}%"></div></div>
+        <div class="gd-pickers">${pickerItems}</div>
+      </div>`;
+    }
+
+    bodyEl.innerHTML = `<div class="gd-teams">
+      ${teamPanel(t1, t1Pickers, t1pct)}
+      <div class="gd-vs">vs</div>
+      ${teamPanel(t2, t2Pickers, t2pct)}
+    </div>`;
+  }
+
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeGameDist() {
+  const modal = document.getElementById('game-dist-modal');
+  if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
 }
