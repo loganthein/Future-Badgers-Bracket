@@ -1665,7 +1665,10 @@ body {
         <div class="mbm-name" id="mbm-name"></div>
         <div class="mbm-meta" id="mbm-meta"></div>
       </div>
-      <button class="mbm-close" onclick="closeMyBracket()">&#10005;</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="btn btn-secondary btn-sm" onclick="printBracket()">🖨️ Print</button>
+        <button class="mbm-close" onclick="closeMyBracket()">&#10005;</button>
+      </div>
     </div>
     <div class="mbm-body" id="mbm-body"></div>
   </div>
@@ -1704,6 +1707,7 @@ body {
     <div id="lb-bracket-view" style="display:none"></div>
     <div class="lb-actions">
       <button class="btn btn-primary"   onclick="handleContinue()">Fill Out My Bracket</button>
+      <button class="btn btn-secondary" id="lb-print-btn" onclick="printBracket()" style="display:none">🖨️ Print My Bracket</button>
       <button class="btn btn-secondary" onclick="initLeaderboard()">Refresh</button>
     </div>
   </div>
@@ -1962,6 +1966,134 @@ function closeMyBracket() {
   document.body.style.overflow = '';
 }
 
+// Builds the visual bracket page (page 2 of print)
+function buildPrintBracketHTML(picks, bdata, escFn) {
+  function getSeed(name) {
+    if (!name || !bdata?.teams) return '';
+    for (const r of REGIONS) {
+      const t = (bdata.teams[r] || []).find(t => t.name === name);
+      if (t) return t.seed;
+    }
+    return '';
+  }
+
+  function slot(name, seedNum, extra) {
+    const s = seedNum || (name ? getSeed(name) : '');
+    const cls = extra || '';
+    if (!name) return `<td class="bs${cls} tbd">TBD</td>`;
+    return `<td class="bs${cls}"><span class="bseed">${s}</span>${escFn(name)}</td>`;
+  }
+
+  function pickSlot(round, regionIdx, gameInReg, rowspan, extra) {
+    const idx  = getGameIndex(round, regionIdx, gameInReg);
+    const name = picks[idx] || null;
+    const s    = name ? getSeed(name) : '';
+    const cls  = extra ? ` ${extra}` : '';
+    if (!name) return `<td class="bs pk${cls}" rowspan="${rowspan}">TBD</td>`;
+    return `<td class="bs pk${cls}" rowspan="${rowspan}"><span class="bseed">${s}</span>${escFn(name)}</td>`;
+  }
+
+  // Build 16 rows (8 matchups × 2 rows) for one region
+  function regionRows(regionIdx, isRight) {
+    const region = REGIONS[regionIdx];
+    const teams  = bdata?.teams?.[region] || [];
+    function getTeam(seed) { return teams.find(t => t.seed === seed)?.name || null; }
+
+    let html = '';
+    for (let g = 0; g < 8; g++) {
+      const [s1, s2] = SEED_PAIRS[g];
+      const t1 = getTeam(s1), t2 = getTeam(s2);
+
+      // Top row of matchup
+      html += '<tr>';
+      if (isRight) {
+        // Right half: picks advance left → center is leftmost column
+        if (g === 0) html += pickSlot(3, regionIdx, 0, 16, 'ff-entry');
+        if (g % 4 === 0) html += pickSlot(2, regionIdx, Math.floor(g / 4), 8);
+        if (g % 2 === 0) html += pickSlot(1, regionIdx, Math.floor(g / 2), 4);
+        html += pickSlot(0, regionIdx, g, 2);
+        html += slot(t1, s1, ' r64');
+      } else {
+        // Left half: R64 teams are leftmost, picks advance right
+        html += slot(t1, s1, ' r64');
+        html += pickSlot(0, regionIdx, g, 2);
+        if (g % 2 === 0) html += pickSlot(1, regionIdx, Math.floor(g / 2), 4);
+        if (g % 4 === 0) html += pickSlot(2, regionIdx, Math.floor(g / 4), 8);
+        if (g === 0) html += pickSlot(3, regionIdx, 0, 16, 'ff-entry');
+      }
+      html += '</tr>';
+
+      // Bottom row of matchup (only R64 team cell)
+      html += '<tr>';
+      html += slot(t2, s2, ' r64');
+      html += '</tr>';
+    }
+    return html;
+  }
+
+  function regionSep(label, isRight) {
+    const align = isRight ? 'right' : 'left';
+    return `<tr class="regnm"><td colspan="5" style="text-align:${align}">${label}</td></tr>`;
+  }
+
+  // Center: FF + Championship
+  const eastFF  = picks[getGameIndex(3, 0, 0)] || 'TBD';
+  const southFF = picks[getGameIndex(3, 2, 0)] || 'TBD';
+  const westFF  = picks[getGameIndex(3, 1, 0)] || 'TBD';
+  const midFF   = picks[getGameIndex(3, 3, 0)] || 'TBD';
+  const ffG0    = picks[60] || 'TBD'; // East vs South winner
+  const ffG1    = picks[61] || 'TBD'; // West vs Midwest winner
+  const champ   = picks[62] || 'TBD';
+
+  function ffSlot(name) {
+    const s = name && name !== 'TBD' ? getSeed(name) : '';
+    return `<div class="ff-sl${name === 'TBD' ? ' tbd' : ''}">${s ? `<span class="bseed">${s}</span>` : ''}${escFn(name)}</div>`;
+  }
+
+  const center = `
+    <div class="bc-center">
+      <div class="bc-ff-label">Final Four</div>
+      <div class="bc-ff-top">
+        <div class="bc-ff-group">
+          ${ffSlot(eastFF)}
+          ${ffSlot(southFF)}
+        </div>
+        <div class="bc-ff-winner">${ffSlot(ffG0)}</div>
+      </div>
+      <div class="bc-champ">
+        <div class="bc-champ-label">Championship</div>
+        ${ffSlot(ffG0)}
+        ${ffSlot(ffG1)}
+        <div class="bc-champ-winner-label">Champion</div>
+        ${ffSlot(champ)}
+      </div>
+      <div class="bc-ff-bot">
+        <div class="bc-ff-winner">${ffSlot(ffG1)}</div>
+        <div class="bc-ff-group">
+          ${ffSlot(westFF)}
+          ${ffSlot(midFF)}
+        </div>
+      </div>
+    </div>`;
+
+  return `
+    <div class="bkt-wrap">
+      <table class="bkt-table">
+        ${regionSep('East', false)}
+        ${regionRows(0, false)}
+        ${regionSep('South', false)}
+        ${regionRows(2, false)}
+      </table>
+      ${center}
+      <table class="bkt-table">
+        ${regionSep('West', true)}
+        ${regionRows(1, true)}
+        ${regionSep('Midwest', true)}
+        ${regionRows(3, true)}
+      </table>
+    </div>`;
+}
+
 function printBracket() {
   const typeLabel = currentUserType === 'badger' ? 'Badger Alum' : 'Future Badger';
 
@@ -1994,11 +2126,14 @@ function printBracket() {
     </div>`;
   }
 
+  const bracketPage = buildPrintBracketHTML(userPicks, bracketData, esc);
+
   const html = `<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8">
 <title>Bracket – ${esc(currentNickname)}</title>
 <style>
+@page { size: landscape; margin: .35in; }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body { font-family: Arial, Helvetica, sans-serif; color: #1a1a1a; background: #fff; font-size: 13px; }
 .header { background: #C5050C; color: #fff; padding: 14px 20px 12px; }
@@ -2014,6 +2149,38 @@ body { font-family: Arial, Helvetica, sans-serif; color: #1a1a1a; background: #f
 .pick-chip  { display: flex; align-items: center; gap: 4px; background: #f4f4f4; border: 1px solid #ddd; border-radius: 4px; padding: 3px 8px; font-size: 12px; font-weight: 600; }
 .seed       { font-size: 10px; background: #ddd; border-radius: 3px; padding: 0 4px; font-weight: 700; flex-shrink: 0; }
 .footer     { border-top: 1px solid #eee; margin-top: 16px; padding-top: 6px; font-size: 10px; color: #aaa; }
+
+/* ── Bracket page ── */
+.bracket-page { page-break-before: always; }
+.bracket-page h2 { font-size: 14px; font-weight: 900; color: #C5050C; margin-bottom: 8px; }
+.bkt-wrap { display: flex; gap: 0; align-items: stretch; width: 100%; }
+.bkt-table { flex: 1; border-collapse: collapse; table-layout: fixed; min-width: 0; }
+.bs {
+  font-size: 8.5px; font-weight: 700; padding: 2px 3px;
+  border: 1px solid #ccc; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; max-width: 120px; vertical-align: middle;
+  height: 17px; line-height: 1.1;
+}
+.bs.r64  { background: #fff; color: #333; min-width: 90px; }
+.bs.pk   { background: #f4f4f4; color: #333; }
+.bs.ff-entry { background: #fff3cd; font-weight: 800; color: #856404; }
+.bs.tbd  { color: #aaa; font-style: italic; font-weight: 400; }
+.bseed   { display: inline-block; background: rgba(0,0,0,.1); border-radius: 2px; padding: 0 2px; font-size: 7.5px; margin-right: 2px; min-width: 12px; text-align: center; }
+.regnm td { font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; color: #fff; background: #C5050C; padding: 3px 5px; }
+
+/* Center FF + Champ */
+.bc-center { width: 160px; min-width: 160px; display: flex; flex-direction: column; border-left: 1px solid #ddd; border-right: 1px solid #ddd; background: #fafafa; }
+.bc-ff-label { text-align: center; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: .05em; color: #C5050C; padding: 4px 0 2px; border-bottom: 1px solid #eee; }
+.bc-ff-top, .bc-ff-bot { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 2px; padding: 4px 6px; }
+.bc-ff-bot { flex-direction: column-reverse; }
+.bc-ff-group { display: flex; flex-direction: column; gap: 1px; }
+.bc-ff-winner { margin: 2px 0; }
+.bc-champ { flex-shrink: 0; border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; background: #fff3cd; padding: 4px 6px; display: flex; flex-direction: column; gap: 2px; }
+.bc-champ-label { font-size: 9px; font-weight: 900; text-transform: uppercase; color: #856404; text-align: center; margin-bottom: 1px; }
+.bc-champ-winner-label { font-size: 8px; font-weight: 800; color: #C5050C; text-align: center; margin-top: 2px; }
+.ff-sl { font-size: 9px; font-weight: 700; padding: 2px 4px; border: 1px solid #ccc; border-radius: 3px; background: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ff-sl.tbd { color: #aaa; font-style: italic; }
+
 @media print {
   body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
@@ -2027,6 +2194,10 @@ body { font-family: Arial, Helvetica, sans-serif; color: #1a1a1a; background: #f
 <div class="content">
   ${roundsHTML}
   <div class="footer">Printed ${new Date().toLocaleDateString('en-US', {weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+</div>
+<div class="bracket-page">
+  <h2>Full Bracket</h2>
+  ${bracketPage}
 </div>
 <script>window.onload = function () { window.print(); }<\/script>
 </body></html>`;
