@@ -2305,7 +2305,14 @@ document.getElementById('nickname-input').addEventListener('keydown', e => {
   window._realFetchAllPicks    = fetchAllPicks;
 
   window.fetchBracketData = async function () {
-    const { bdata } = await _getTestCache();
+    const { bdata, picks } = await _getTestCache();
+    // Populate userPicks + currentNickname so printBracket() has data to work with
+    const testEntry = picks['TestAlum1'];
+    if (testEntry) {
+      testEntry.picks.forEach((p, i) => { userPicks[i] = p; });
+      if (!currentNickname) currentNickname = 'TestAlum1';
+      if (!currentUserType) currentUserType = 'badger';
+    }
     return bdata;
   };
   window.fetchAllPicks = async function () {
