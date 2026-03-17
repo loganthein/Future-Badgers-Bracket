@@ -393,10 +393,22 @@ function _renderAwards(allEntries, results, bdata) {
     </div>`;
   }
 
+  const futureBCard = `<div class="award-card">
+    <div class="award-title">🃏 Top Future Badger</div>
+    ${winnerLine(futureB)}
+    ${metaLine(futureB)}
+    ${champLine(futureB)}
+    <div class="award-prize-tiers">
+      <div>🥇 1st: Gift Package + Box of Cards</div>
+      <div>🥈 2nd: Badger Gift Package</div>
+      <div>🥉 3rd: Badger Gift Package</div>
+    </div>
+  </div>`;
+
   el.innerHTML = `<div class="awards-grid">
-    ${card({ title: 'Overall Champion', icon: '🏈', prize: '4-Pack of Badger Football Tickets',    sub: '(Sept 12 or Sept 19 game)', winners: overall, isOverall: true  })}
-    ${card({ title: 'Top Badger Alum',  icon: '🍺', prize: '12-Pack of Badger NIL Beer',           sub: '',                          winners: alums,   isOverall: false })}
-    ${card({ title: 'Top Future Badger',icon: '🃏', prize: 'Badger Football Card Pack + Box of Cards', sub: '(Sport of their choosing)', winners: futureB, isOverall: false })}
+    ${card({ title: 'Overall Champion', icon: '🏈', prize: '4-Pack of Badger Football Tickets', sub: '(Sept 12 or Sept 19 game)', winners: overall, isOverall: true  })}
+    ${card({ title: 'Top Badger Alum',  icon: '🍺', prize: '12-Pack of Badger NIL Beer',        sub: '',                         winners: alums,   isOverall: false })}
+    ${futureBCard}
   </div>`;
   el.style.display = 'block';
 }
