@@ -670,6 +670,7 @@ function printLbCurrentBracket() {
   const picks    = selEntry ? selEntry.picks : (_cachedResults || new Array(63).fill(null));
   const nickname = selEntry ? selEntry.nickname : 'Tournament Results';
   const score    = selEntry ? ` — ${selEntry.score} pts` : '';
+  const tb       = selEntry && selEntry.tiebreaker != null ? ` · Tiebreaker: ${selEntry.tiebreaker} three-pointers` : '';
 
   function esc(s) {
     return (s || '').replace(/[&<>"']/g, c =>
@@ -696,7 +697,7 @@ ${getBracketPrintCSS()}
 <body>
 <div class="header">
   <h1>Future Badgers Bracket Challenge</h1>
-  <div class="meta"><strong>${esc(nickname)}</strong>${esc(score)}</div>
+  <div class="meta"><strong>${esc(nickname)}</strong>${esc(score)}${esc(tb)}</div>
 </div>
 <div style="padding: 0 0 8px">
   ${bracketPage}
