@@ -244,11 +244,13 @@ function _renderEntries(allEntries, results, bdata) {
     const clickHandler = picksVisible ? `onclick="toggleLbDetail('${safeId}')"` : '';
     const expandArrow  = picksVisible ? '<span class="lb-expand">&#9660;</span>' : '';
 
+    const safeNick = _escLb(entry.nickname).replace(/'/g, '&#39;');
     html += `
       <div class="lb-row" id="${safeId}">
         <div class="lb-main" ${clickHandler}>
           <span class="lb-rank">#${rank}</span>
           <span class="lb-name">${_escLb(entry.nickname)}</span>
+          <button class="btn-delete" onclick="event.stopPropagation();adminDeleteEntry('${safeNick}')">Delete</button>
           <span class="lb-pts">${ptsDisplay}</span>
           <span class="lb-max lb-hide-sm">${maxDisplay}</span>
           <span class="lb-tiebreaker lb-hide-sm">${tbDisplay}</span>
@@ -262,6 +264,8 @@ function _renderEntries(allEntries, results, bdata) {
   });
 
   listEl.innerHTML = html;
+  // Re-apply admin mode class after re-render
+  if (typeof _applyAdminUI === 'function') _applyAdminUI();
 }
 
 function _sortEntries(entries, wisThrees) {

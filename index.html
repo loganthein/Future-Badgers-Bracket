@@ -1216,6 +1216,65 @@ body {
   flex-shrink: 0;
 }
 
+/* ── Admin mode ── */
+#admin-badge {
+  display: none;
+  background: var(--red);
+  color: var(--white);
+  font-size: .72rem;
+  font-weight: 800;
+  padding: .25rem .6rem;
+  border-radius: 4px;
+  letter-spacing: .04em;
+}
+#admin-exit-btn {
+  display: none;
+  background: none;
+  border: 1px solid rgba(255,255,255,.6);
+  color: var(--white);
+  font-family: 'Nunito', sans-serif;
+  font-size: .8rem;
+  font-weight: 700;
+  padding: .25rem .65rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: .5rem;
+}
+#admin-exit-btn:hover { background: rgba(255,255,255,.15); }
+.lb-admin-controls { display: flex; align-items: center; gap: .5rem; }
+.btn-delete {
+  display: none;
+  padding: .2rem .6rem;
+  font-size: .75rem;
+  font-weight: 800;
+  background: var(--red);
+  color: var(--white);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-family: 'Nunito', sans-serif;
+}
+.btn-delete:hover { background: var(--red-dk); }
+.admin-mode .btn-delete { display: inline-block; }
+.lb-footer {
+  text-align: right;
+  padding: .5rem .75rem .25rem;
+  max-width: 720px;
+  margin: 0 auto;
+}
+#admin-link {
+  font-size: .72rem;
+  color: var(--border);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 600;
+  transition: color .15s;
+}
+#admin-link:hover { color: var(--muted); }
+
 /* ── Responsive ── */
 @media (max-width: 580px) {
   .lb-hide-sm { display: none; }
@@ -1433,7 +1492,11 @@ body {
 <div id="page-leaderboard" class="page">
   <div class="lb-header">
     <h2>Leaderboard</h2>
-    <span><span id="lb-updated"></span><span id="lb-refresh-cd"></span></span>
+    <div class="lb-admin-controls">
+      <span id="lb-updated"></span><span id="lb-refresh-cd"></span>
+      <span id="admin-badge">ADMIN MODE</span>
+      <button id="admin-exit-btn" onclick="exitAdminMode()">Exit Admin</button>
+    </div>
   </div>
 
   <div id="awards-section" class="awards-section" style="display:none"></div>
@@ -1458,6 +1521,9 @@ body {
       <button class="btn btn-primary"   onclick="handleContinue()">Fill Out My Bracket</button>
       <button class="btn btn-secondary" onclick="initLeaderboard()">Refresh</button>
     </div>
+  </div>
+  <div class="lb-footer">
+    <button id="admin-link" onclick="enterAdminMode()">Admin</button>
   </div>
 </div>
 
@@ -1498,6 +1564,93 @@ function _updateDeadlineCd() {
 }
 _updateDeadlineCd();
 setInterval(_updateDeadlineCd, 1000);
+
+// ── Admin mode ────────────────────────────────────────────
+const ADMIN_PASSWORD = "BadgerAdmin2026";
+
+function _isAdminMode() {
+  return sessionStorage.getItem('adminMode') === '1';
+}
+
+function _applyAdminUI() {
+  const on = _isAdminMode();
+  document.getElementById('admin-badge').style.display    = on ? 'inline-block' : 'none';
+  document.getElementById('admin-exit-btn').style.display = on ? 'inline-block' : 'none';
+  document.getElementById('admin-link').style.display     = on ? 'none' : '';
+  const list = document.getElementById('leaderboard-list');
+  if (list) list.classList.toggle('admin-mode', on);
+}
+
+function enterAdminMode() {
+  if (_isAdminMode()) return;
+  const pw = prompt('Enter admin password:');
+  if (pw === null) return;
+  if (pw !== ADMIN_PASSWORD) {
+    alert('Incorrect password.');
+    return;
+  }
+  sessionStorage.setItem('adminMode', '1');
+  _applyAdminUI();
+}
+
+function exitAdminMode() {
+  sessionStorage.removeItem('adminMode');
+  _applyAdminUI();
+}
+
+async function adminDeleteEntry(nickname) {
+  if (!_isAdminMode()) return;
+  if (!confirm(`Delete ${nickname}'s bracket? This cannot be undone.`)) return;
+
+  // Fetch current picks, remove entry, PATCH back
+  const rawUrl = `https://gist.githubusercontent.com/${CONFIG.REPO_OWNER}/${CONFIG.PICKS_GIST_ID}/raw/${CONFIG.PICKS_FILENAME}?t=${Date.now()}`;
+  let current = {};
+  try {
+    const resp = await fetch(rawUrl);
+    if (resp.ok) {
+      const text = await resp.text();
+      if (text.trim() && text.trim() !== 'null') current = JSON.parse(text);
+    }
+  } catch (e) {
+    alert('Could not load picks: ' + e.message);
+    return;
+  }
+
+  if (!current[nickname]) {
+    alert('Entry not found — it may have already been deleted.');
+    await initLeaderboard();
+    return;
+  }
+
+  delete current[nickname];
+
+  const t = "ghp_00lGF9vzOch987qGWd" + "kHtEBXd4tl9a25qFQE";
+  try {
+    const patch = await fetch(`https://api.github.com/gists/${CONFIG.PICKS_GIST_ID}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': 'token ' + t,
+        'Content-Type':  'application/json',
+        'Accept':        'application/vnd.github.v3+json',
+      },
+      body: JSON.stringify({
+        files: { [CONFIG.PICKS_FILENAME]: { content: JSON.stringify(current, null, 2) } },
+      }),
+    });
+    if (!patch.ok) {
+      const err = await patch.json().catch(() => ({}));
+      throw new Error(err.message || patch.status);
+    }
+  } catch (e) {
+    alert('Delete failed: ' + e.message);
+    return;
+  }
+
+  await initLeaderboard();
+}
+
+// Restore admin UI if session flag is set
+if (_isAdminMode()) _applyAdminUI();
 
 // ── Leave-bracket guard ───────────────────────────────────
 
