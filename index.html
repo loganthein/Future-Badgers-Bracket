@@ -1381,6 +1381,48 @@ body {
 
 .lb-header-right { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; justify-content: flex-end; }
 
+/* ── Full bracket overlay ── */
+#lb-full-bracket-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--white);
+  z-index: 200;
+  overflow-y: auto;
+}
+.lfb-header {
+  background: var(--red);
+  color: var(--white);
+  padding: .75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+.lfb-title {
+  font-size: 1rem;
+  font-weight: 800;
+  flex: 1;
+  min-width: 0;
+}
+.lfb-actions { display: flex; gap: .5rem; flex-shrink: 0; }
+.lfb-actions .btn { font-size: .8rem; padding: .35rem .85rem; }
+#lfb-bracket-content { padding-bottom: 2rem; }
+.view-full-bracket-wrap {
+  padding: .75rem 1rem 1rem;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+@media print {
+  body > *:not(#lb-full-bracket-overlay) { display: none !important; }
+  #lb-full-bracket-overlay { position: static; overflow: visible; }
+  .lfb-header { position: static; box-shadow: none; }
+  .lfb-actions { display: none; }
+}
+
 /* ── Responsive ── */
 @media (max-width: 580px) {
   .lb-hide-sm { display: none; }
@@ -1647,6 +1689,20 @@ body {
     </div>
     <div class="gd-body" id="game-dist-body"></div>
   </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     FULL BRACKET OVERLAY
+══════════════════════════════════════════ -->
+<div id="lb-full-bracket-overlay" style="display:none">
+  <div class="lfb-header">
+    <div class="lfb-title" id="lfb-title"></div>
+    <div class="lfb-actions">
+      <button class="btn btn-secondary btn-sm" onclick="printLbBracket()">Print</button>
+      <button class="btn btn-primary btn-sm" onclick="closeLbBracket()">&larr; Back to Leaderboard</button>
+    </div>
+  </div>
+  <div id="lfb-bracket-content"></div>
 </div>
 
 <!-- ══════════════════════════════════════════
