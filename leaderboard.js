@@ -46,10 +46,12 @@ function setLbTab(tab) {
     actions: document.querySelector('#page-leaderboard .lb-actions'),
     awards:  document.getElementById('awards-section'),
   };
+  const printBtn = document.getElementById('lb-print-btn');
   if (els.list)    els.list.style.display    = isBracket ? 'none' : '';
   if (els.bracket) els.bracket.style.display = isBracket ? 'block' : 'none';
   if (els.key)     els.key.style.display     = isBracket ? 'none' : '';
-  if (els.actions) els.actions.style.display = isBracket ? 'none' : '';
+  if (els.actions) els.actions.style.display = isBracket ? 'flex' : '';
+  if (printBtn)    printBtn.style.display    = isBracket ? '' : 'none';
   if (els.awards)  els.awards.style.display  = isBracket ? 'none' : (els.awards.innerHTML ? 'block' : 'none');
 
   if (isBracket) {
@@ -582,41 +584,45 @@ function renderLbBracket(results, bdata) {
   const container = document.getElementById('lb-bracket-view');
   if (!container) return;
 
-  const clickable = _picksVisible();
-  const entries   = _cachedEntries || [];
+  const picksVisible = _picksVisible();
+  const entries      = _cachedEntries || [];
 
-  const selEntry = _lbBracketPerson
+  // Only allow overlaying someone's picks after the reveal time
+  const selEntry = picksVisible && _lbBracketPerson
     ? entries.find(e => e.nickname === _lbBracketPerson)
     : null;
 
   const selScore = selEntry ? selEntry.score : null;
   const selMax   = selEntry ? selEntry.maxAvailable : null;
 
-  // Dropdown options — sort entries by score desc then alpha
-  const sorted = [...entries].sort((a, b) =>
-    b.score !== a.score ? b.score - a.score : a.nickname.localeCompare(b.nickname)
-  );
-  const options = sorted.map(e => {
-    const label = clickable
-      ? `${_escLb(e.nickname)} (${e.score} pts)`
-      : _escLb(e.nickname);
-    const sel = e.nickname === _lbBracketPerson ? ' selected' : '';
-    return `<option value="${_escLb(e.nickname)}"${sel}>${label}</option>`;
-  }).join('');
+  let controls = '';
+  if (picksVisible) {
+    // Dropdown to overlay a person's picks
+    const sorted = [...entries].sort((a, b) =>
+      b.score !== a.score ? b.score - a.score : a.nickname.localeCompare(b.nickname)
+    );
+    const options = sorted.map(e => {
+      const sel = e.nickname === _lbBracketPerson ? ' selected' : '';
+      return `<option value="${_escLb(e.nickname)}"${sel}>${_escLb(e.nickname)} (${e.score} pts)</option>`;
+    }).join('');
+    const scoreBadge = selEntry
+      ? `<span class="lb-bracket-score">${selScore} pts · Max: ${selMax}</span>`
+      : '';
+    controls = `
+      <div class="lb-bracket-controls">
+        <select class="lb-bracket-select" onchange="setLbBracketPerson(this.value)">
+          <option value="">— Results only —</option>
+          ${options}
+        </select>
+        ${scoreBadge}
+      </div>`;
+  } else {
+    controls = `<div class="lb-bracket-controls">
+      <div class="picks-locked" style="margin:0">Brackets are hidden until the tournament begins — check back Thursday at 11am!</div>
+    </div>`;
+  }
 
-  const scoreBadge = selEntry && clickable
-    ? `<span class="lb-bracket-score">${selScore} pts · Max: ${selMax}</span>`
-    : '';
-
-  container.innerHTML = `
-    <div class="lb-bracket-controls">
-      <select class="lb-bracket-select" onchange="setLbBracketPerson(this.value)">
-        <option value="">— Results only —</option>
-        ${options}
-      </select>
-      ${scoreBadge}
-    </div>
-    ${_buildBracketGrid(selEntry, results, bdata, clickable)}`;
+  container.innerHTML = `${controls}${_buildBracketGrid(selEntry, results, bdata, picksVisible)}`;
 }
 
 // ── Full-page bracket overlay ────────────────────────────────
