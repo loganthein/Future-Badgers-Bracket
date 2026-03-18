@@ -360,6 +360,25 @@ function _renderAwards(allEntries, results, bdata) {
   const alums   = topOf(allEntries.filter(e => e.type === 'badger'));
   const futureB = topOf(allEntries.filter(e => e.type === 'future_badger'));
 
+  function bottomOf(entries) {
+    if (!entries.length || !visible) return null;
+    const sorted = _sortEntries(entries, wisThrees);
+    return sorted[sorted.length - 1];
+  }
+
+  const gopherAlum   = bottomOf(allEntries.filter(e => e.type === 'badger'));
+  const gopherFuture = bottomOf(allEntries.filter(e => e.type === 'future_badger'));
+
+  function gopherSection(loser) {
+    const name = loser ? `<div class="gopher-name">${_escLb(loser.nickname)}</div>` : `<div class="gopher-name tbd">TBD</div>`;
+    return `<div class="award-divider"></div>
+      <div class="gopher-section">
+        <div class="gopher-title">🐿️ Honorary Gopher</div>
+        ${name}
+        <div class="gopher-sub">Farthest from 1st</div>
+      </div>`;
+  }
+
   function winnerLine(winners) {
     if (!visible || !winners.length) return `<div class="award-winner tbd">Winner TBD</div>`;
     return winners.map(w =>
@@ -397,6 +416,15 @@ function _renderAwards(allEntries, results, bdata) {
     </div>`;
   }
 
+  const alumCard = `<div class="award-card">
+    <div class="award-title">🍺 Top Badger Alum</div>
+    ${winnerLine(alums)}
+    ${metaLine(alums)}
+    ${champLine(alums)}
+    ${prizeLine('12-Pack of Badger NIL Beer', '')}
+    ${gopherSection(gopherAlum)}
+  </div>`;
+
   const futureBCard = `<div class="award-card">
     <div class="award-title">🃏 Top Future Badger</div>
     ${winnerLine(futureB)}
@@ -407,11 +435,12 @@ function _renderAwards(allEntries, results, bdata) {
       <div>🥈 2nd: Badger Gift Package</div>
       <div>🥉 3rd: Badger Gift Package</div>
     </div>
+    ${gopherSection(gopherFuture)}
   </div>`;
 
   el.innerHTML = `<div class="awards-grid">
     ${card({ title: 'Overall Champion', icon: '🏈', prize: '4-Pack of Badger Football Tickets', sub: '(Sept 12 or Sept 19 game)', winners: overall, isOverall: true  })}
-    ${card({ title: 'Top Badger Alum',  icon: '🍺', prize: '12-Pack of Badger NIL Beer',        sub: '',                         winners: alums,   isOverall: false })}
+    ${alumCard}
     ${futureBCard}
   </div>`;
   el.style.display = 'block';
