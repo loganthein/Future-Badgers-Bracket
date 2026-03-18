@@ -39,17 +39,21 @@ function setLbTab(tab) {
 
   const isBracket = tab === 'bracket';
   const els = {
-    list:    document.getElementById('leaderboard-list'),
-    bracket: document.getElementById('lb-bracket-view'),
-    key:     document.querySelector('#page-leaderboard .score-key'),
-    tbNote:  document.getElementById('lb-tb-note'),
-    actions: document.querySelector('#page-leaderboard .lb-actions'),
-    awards:  document.getElementById('awards-section'),
+    list:      document.getElementById('leaderboard-list'),
+    bracket:   document.getElementById('lb-bracket-view'),
+    key:       document.querySelector('#page-leaderboard .score-key'),
+    tbNote:    document.getElementById('lb-tb-note'),
+    actions:   document.querySelector('#page-leaderboard .lb-actions'),
+    awards:    document.getElementById('awards-section'),
+    container: document.querySelector('#page-leaderboard .lb-container'),
   };
+  const printBtn = document.getElementById('lb-print-btn');
+  if (els.container) els.container.classList.toggle('bracket-wide', isBracket);
   if (els.list)    els.list.style.display    = isBracket ? 'none' : '';
   if (els.bracket) els.bracket.style.display = isBracket ? 'block' : 'none';
   if (els.key)     els.key.style.display     = isBracket ? 'none' : '';
-  if (els.actions) els.actions.style.display = isBracket ? 'none' : '';
+  if (els.actions) els.actions.style.display = isBracket ? 'flex' : '';
+  if (printBtn)    printBtn.style.display    = isBracket ? '' : 'none';
   if (els.awards)  els.awards.style.display  = isBracket ? 'none' : (els.awards.innerHTML ? 'block' : 'none');
 
   if (isBracket) {
@@ -611,41 +615,45 @@ function renderLbBracket(results, bdata) {
   const container = document.getElementById('lb-bracket-view');
   if (!container) return;
 
-  const clickable = _picksVisible();
-  const entries   = _cachedEntries || [];
+  const picksVisible = _picksVisible();
+  const entries      = _cachedEntries || [];
 
-  const selEntry = _lbBracketPerson
+  // Only allow overlaying someone's picks after the reveal time
+  const selEntry = picksVisible && _lbBracketPerson
     ? entries.find(e => e.nickname === _lbBracketPerson)
     : null;
 
   const selScore = selEntry ? selEntry.score : null;
   const selMax   = selEntry ? selEntry.maxAvailable : null;
 
-  // Dropdown options — sort entries by score desc then alpha
-  const sorted = [...entries].sort((a, b) =>
-    b.score !== a.score ? b.score - a.score : a.nickname.localeCompare(b.nickname)
-  );
-  const options = sorted.map(e => {
-    const label = clickable
-      ? `${_escLb(e.nickname)} (${e.score} pts)`
-      : _escLb(e.nickname);
-    const sel = e.nickname === _lbBracketPerson ? ' selected' : '';
-    return `<option value="${_escLb(e.nickname)}"${sel}>${label}</option>`;
-  }).join('');
+  let controls = '';
+  if (picksVisible) {
+    // Dropdown to overlay a person's picks
+    const sorted = [...entries].sort((a, b) =>
+      b.score !== a.score ? b.score - a.score : a.nickname.localeCompare(b.nickname)
+    );
+    const options = sorted.map(e => {
+      const sel = e.nickname === _lbBracketPerson ? ' selected' : '';
+      return `<option value="${_escLb(e.nickname)}"${sel}>${_escLb(e.nickname)} (${e.score} pts)</option>`;
+    }).join('');
+    const scoreBadge = selEntry
+      ? `<span class="lb-bracket-score">${selScore} pts · Max: ${selMax}</span>`
+      : '';
+    controls = `
+      <div class="lb-bracket-controls">
+        <select class="lb-bracket-select" onchange="setLbBracketPerson(this.value)">
+          <option value="">— Results only —</option>
+          ${options}
+        </select>
+        ${scoreBadge}
+      </div>`;
+  } else {
+    controls = `<div class="lb-bracket-controls">
+      <div class="picks-locked" style="margin:0">Brackets are hidden until the tournament begins — check back Thursday at 11am!</div>
+    </div>`;
+  }
 
-  const scoreBadge = selEntry && clickable
-    ? `<span class="lb-bracket-score">${selScore} pts · Max: ${selMax}</span>`
-    : '';
-
-  container.innerHTML = `
-    <div class="lb-bracket-controls">
-      <select class="lb-bracket-select" onchange="setLbBracketPerson(this.value)">
-        <option value="">— Results only —</option>
-        ${options}
-      </select>
-      ${scoreBadge}
-    </div>
-    ${_buildBracketGrid(selEntry, results, bdata, clickable)}`;
+  container.innerHTML = `${controls}${_buildBracketGrid(selEntry, results, bdata, picksVisible)}`;
 }
 
 // ── Full-page bracket overlay ────────────────────────────────
@@ -679,6 +687,58 @@ function closeLbBracket() {
 
 function printLbBracket() {
   window.print();
+}
+
+// Prints whatever bracket is currently selected in the leaderboard bracket tab
+function printLbCurrentBracket() {
+  const entries = _cachedEntries || [];
+  const bdata   = _cachedBdata;
+
+  const selEntry = _lbBracketPerson
+    ? entries.find(e => e.nickname === _lbBracketPerson)
+    : null;
+
+  const picks    = selEntry ? selEntry.picks : (_cachedResults || new Array(63).fill(null));
+  const nickname = selEntry ? selEntry.nickname : 'Tournament Results';
+  const score    = selEntry ? ` — ${selEntry.score} pts` : '';
+  const tb       = selEntry && selEntry.tiebreaker != null ? ` · Tiebreaker: ${selEntry.tiebreaker} three-pointers` : '';
+
+  function esc(s) {
+    return (s || '').replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  const bracketPage = buildPrintBracketHTML(picks, bdata, esc);
+
+  const html = `<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8">
+<title>Bracket – ${esc(nickname)}</title>
+<style>
+@page { size: landscape; margin: .35in; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, Helvetica, sans-serif; color: #1a1a1a; background: #fff; font-size: 13px; }
+.header { background: #C5050C; color: #fff; padding: 14px 20px 12px; }
+.header h1 { font-size: 18px; font-weight: 900; }
+.header .meta { font-size: 12px; margin-top: 5px; opacity: .92; }
+h2 { font-size: 14px; font-weight: 900; color: #C5050C; margin: 12px 0 8px; }
+${getBracketPrintCSS()}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>Future Badgers Bracket Challenge</h1>
+  <div class="meta"><strong>${esc(nickname)}</strong>${esc(score)}${esc(tb)}</div>
+</div>
+<div style="padding: 0 0 8px">
+  ${bracketPage}
+</div>
+<script>window.onload = function () { window.print(); }<\/script>
+</body></html>`;
+
+  const w = window.open('', '_blank');
+  if (w) { w.document.write(html); w.document.close(); }
+  else   { alert('Pop-up blocked! Please allow pop-ups for this site to print.'); }
 }
 
 // ── Game pick distribution modal ────────────────────────────
