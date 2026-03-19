@@ -159,6 +159,27 @@ jobs:
             });
           }
 
+          // Seed pairs in bracket order — index = game slot (0-based)
+          const SEED_PAIRS = [
+            [1,16],[8,9],[5,12],[4,13],[6,11],[3,14],[7,10],[2,15]
+          ];
+
+          // For round 1: determine game slot from the two competing seeds
+          function getR1GameId(region, competitors) {
+            const prefix = { 'East': 'E', 'West': 'W', 'South': 'S', 'Midwest': 'M' }[region];
+            if (!prefix) return null;
+            const seeds = competitors.map(c => parseInt(c.curatedRank?.current || c.seed || 0));
+            const s1 = seeds[0], s2 = seeds[1];
+            for (let i = 0; i < SEED_PAIRS.length; i++) {
+              const [a, b] = SEED_PAIRS[i];
+              if ((s1 === a && s2 === b) || (s1 === b && s2 === a)) {
+                return `${prefix}${i + 1}`;
+              }
+            }
+            console.log(`  WARNING: no seed pair match for seeds ${s1} vs ${s2}`);
+            return null;
+          }
+
           function buildGameId(region, roundIndex, gameNum) {
             const prefix = { 'East': 'E', 'West': 'W', 'South': 'S', 'Midwest': 'M' }[region];
             if (!prefix) return null;
@@ -235,7 +256,8 @@ jobs:
 
               const rawName = winner.team?.displayName || winner.team?.name || '';
               const winnerName = normalizeName(rawName);
-              console.log(`\nGame winner: ${rawName} → ${winnerName}`);
+              const seeds = competitors.map(c => parseInt(c.curatedRank?.current || c.seed || 0));
+              console.log(`\nGame winner: ${rawName} → ${winnerName} | seeds: ${seeds.join(' vs ')}`);
 
               const roundIndex = getRoundIndex(event);
               const region = getRegion(event);
@@ -245,7 +267,14 @@ jobs:
                 continue;
               }
 
-              if (roundIndex <= 3 && region) {
+              if (roundIndex === 0 && region) {
+                // Round 1: use seed pairs to get correct game slot
+                const gameId = getR1GameId(region, competitors);
+                if (gameId) {
+                  newResults[ROUND_KEYS[roundIndex]].push({ gameId, winner: winnerName });
+                  console.log(`  → Added ${gameId}: ${winnerName}`);
+                }
+              } else if (roundIndex <= 3 && region) {
                 const key = `${region}-${roundIndex}`;
                 regionRoundCount[key] = (regionRoundCount[key] || 0) + 1;
                 const gameNum = regionRoundCount[key];
