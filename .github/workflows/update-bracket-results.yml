@@ -19,7 +19,7 @@ jobs:
           node << 'EOF'
           const https = require('https');
 
-          const ROUND_KEYS = ['round1', 'round2', 'sweet16', 'elite8', 'finalfour', 'championship'];
+          const ROUND_KEYS = ['round1', 'round2', 'round3', 'round4', 'round5', 'round6'];
 
           const NICKNAME_MAP = {
             'Duke Blue Devils': 'Duke',
@@ -209,8 +209,8 @@ jobs:
             const bracketData = JSON.parse(gistData.files['bracket-data.json'].content);
 
             const newResults = {
-              round1: [], round2: [], sweet16: [],
-              elite8: [], finalfour: [], championship: []
+              round1: [], round2: [], round3: [],
+              round4: [], round5: [], round6: []
             };
 
             const espn = await fetch(
@@ -255,11 +255,11 @@ jobs:
                   console.log(`  → Added ${gameId}: ${winnerName}`);
                 }
               } else if (roundIndex === 4) {
-                const ffNum = newResults.finalfour.length + 1;
-                newResults.finalfour.push({ gameId: `FF${ffNum}`, winner: winnerName });
+                const ffNum = newResults.round5.length + 1;
+                newResults.round5.push({ gameId: `FF${ffNum}`, winner: winnerName });
                 console.log(`  → Added FF${ffNum}: ${winnerName}`);
               } else if (roundIndex === 5) {
-                newResults.championship.push({ gameId: 'CHAMP', winner: winnerName });
+                newResults.round6.push({ gameId: 'CHAMP', winner: winnerName });
                 console.log(`  → Added CHAMP: ${winnerName}`);
               } else {
                 console.log(`  SKIPPED — roundIndex ${roundIndex} but no region`);
