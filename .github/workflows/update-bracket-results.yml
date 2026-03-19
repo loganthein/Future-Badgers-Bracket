@@ -1,0 +1,229 @@
+name: Update Bracket Results
+
+on:
+  schedule:
+    # Runs every 20 minutes from noon to midnight CT during tournament (UTC offset)
+    - cron: '0,20,40 17-23 * * *'   # 12pm–6pm CT
+    - cron: '0,20,40 0-5 * * *'     # 6pm–11pm CT (next UTC day)
+  workflow_dispatch: # Allow manual trigger anytime
+
+jobs:
+  update-results:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Fetch ESPN scores and update Gist
+        env:
+          GIST_TOKEN: ${{ secrets.GIST_PAT }}
+          GIST_ID: 798906720fa8cb351ffb485d9631a07f
+        run: |
+          node << 'EOF'
+          const https = require('https');
+
+          // ─── Team name aliases ───────────────────────────────────────────────
+          // Maps ESPN display names → names used in your bracket-data.json
+          const NAME_MAP = {
+            'North Carolina':        'North Carolina',
+            'NC State':              'Texas/NC State',   // play-in winner slot
+            'Texas':                 'Texas/NC State',
+            'Miami':                 'Miami (FL)',
+            'Miami FL':              'Miami (FL)',
+            'Miami Ohio':            'Miami (OH)/SMU',
+            'SMU':                   'Miami (OH)/SMU',
+            'Prairie View':          'Pra. View/Lehigh',
+            'Lehigh':                'Pra. View/Lehigh',
+            'UMBC':                  'UMBC/Howard',
+            'Howard':                'UMBC/Howard',
+            'Long Island University':'LIU',
+            'UT San Antonio':        'UTSA',
+            'Saint Louis':           'Saint Louis',
+            'UCF':                   'UCF',
+            'Florida':               'Florida',
+            'Iowa State':            'Iowa State',
+            'Michigan':              'Michigan',
+          };
+
+          // ─── Game ID mapping ─────────────────────────────────────────────────
+          // ESPN tournament bracket positions → your gameId format
+          // Round 1: 32 games, Round 2: 16, S16: 8, E8: 4, FF: 2, Champ: 1
+          // Regions in ESPN order: East, West, South, Midwest
+          //
+          // Your format: E1-E8 (East R1), W1-W8, S1-S8, M1-M8
+          //              E9-E12 (East R2), W9-W12, S9-S12, M9-M12
+          //              E13-E14 (Sweet 16), W13-W14, S13-S14, M13-M14
+          //              E15 (Elite 8), W15, S15, M15
+          //              FF1, FF2, CHAMP
+
+          const ROUND_KEYS = ['round1', 'round2', 'sweet16', 'elite8', 'finalfour', 'championship'];
+
+          function fetch(url) {
+            return new Promise((resolve, reject) => {
+              https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, res => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                  try { resolve(JSON.parse(data)); }
+                  catch(e) { reject(e); }
+                });
+              }).on('error', reject);
+            });
+          }
+
+          function normalizeName(name) {
+            return NAME_MAP[name] || name;
+          }
+
+          function fetchGist(gistId, token) {
+            return new Promise((resolve, reject) => {
+              const options = {
+                hostname: 'api.github.com',
+                path: `/gists/${gistId}`,
+                headers: {
+                  'Authorization': `token ${token}`,
+                  'User-Agent': 'bracket-updater',
+                  'Accept': 'application/vnd.github.v3+json'
+                }
+              };
+              https.get(options, res => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                  try { resolve(JSON.parse(data)); }
+                  catch(e) { reject(e); }
+                });
+              }).on('error', reject);
+            });
+          }
+
+          function updateGist(gistId, token, content) {
+            return new Promise((resolve, reject) => {
+              const body = JSON.stringify({
+                files: { 'bracket-data.json': { content: JSON.stringify(content, null, 2) } }
+              });
+              const options = {
+                hostname: 'api.github.com',
+                path: `/gists/${gistId}`,
+                method: 'PATCH',
+                headers: {
+                  'Authorization': `token ${token}`,
+                  'User-Agent': 'bracket-updater',
+                  'Accept': 'application/vnd.github.v3+json',
+                  'Content-Type': 'application/json',
+                  'Content-Length': Buffer.byteLength(body)
+                }
+              };
+              const req = https.request(options, res => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => resolve(JSON.parse(data)));
+              });
+              req.on('error', reject);
+              req.write(body);
+              req.end();
+            });
+          }
+
+          // Maps ESPN round # and region to your gameId prefix + offset
+          function buildGameId(region, roundIndex, gameNumInRound) {
+            const prefix = { 'East': 'E', 'West': 'W', 'South': 'S', 'Midwest': 'M' }[region];
+            if (!prefix) return null;
+            // Round 1: games 1-8, Round 2: 9-12, S16: 13-14, E8: 15
+            const offsets = [0, 8, 12, 14];
+            if (roundIndex <= 3) return `${prefix}${offsets[roundIndex] + gameNumInRound}`;
+            return null; // FF and Champ handled separately
+          }
+
+          async function main() {
+            const token = process.env.GIST_TOKEN;
+            const gistId = process.env.GIST_ID;
+
+            // 1. Fetch current bracket-data.json from Gist
+            const gistData = await fetchGist(gistId, token);
+            const bracketData = JSON.parse(gistData.files['bracket-data.json'].content);
+
+            // Reset results to rebuild from ESPN
+            const newResults = {
+              round1: [], round2: [], sweet16: [],
+              elite8: [], finalfour: [], championship: []
+            };
+
+            // 2. Fetch ESPN scoreboard (NCAA tournament group=100)
+            const espn = await fetch(
+              'https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=100'
+            );
+
+            const events = espn.events || [];
+            console.log(`Found ${events.length} ESPN events`);
+
+            // Track game counts per region per round for position mapping
+            const regionRoundCount = {};
+
+            for (const event of events) {
+              const status = event.status?.type?.name;
+              if (status !== 'STATUS_FINAL') continue; // only completed games
+
+              const competition = event.competitions?.[0];
+              if (!competition) continue;
+
+              const competitors = competition.competitors || [];
+              const winner = competitors.find(c => c.winner);
+              if (!winner) continue;
+
+              const winnerName = normalizeName(winner.team?.displayName || winner.team?.name || '');
+              
+              // Determine round from notes or season type
+              const notes = competition.notes?.[0]?.headline || '';
+              const roundMatch = notes.match(/Round of (\d+)|Sweet 16|Elite Eight|Final Four|Championship/i);
+              
+              let roundIndex = -1;
+              if (notes.match(/Round of 64/i))        roundIndex = 0;
+              else if (notes.match(/Round of 32/i))   roundIndex = 1;
+              else if (notes.match(/Sweet 16/i))      roundIndex = 2;
+              else if (notes.match(/Elite Eight/i))   roundIndex = 3;
+              else if (notes.match(/Final Four/i))    roundIndex = 4;
+              else if (notes.match(/Championship/i))  roundIndex = 5;
+
+              if (roundIndex === -1) continue;
+
+              // Determine region
+              const regionNote = notes.match(/\b(East|West|South|Midwest)\b/i);
+              const region = regionNote ? regionNote[1] : null;
+
+              if (roundIndex <= 3 && region) {
+                const key = `${region}-${roundIndex}`;
+                regionRoundCount[key] = (regionRoundCount[key] || 0) + 1;
+                const gameNum = regionRoundCount[key];
+                const gameId = buildGameId(region, roundIndex, gameNum);
+                if (gameId) {
+                  newResults[ROUND_KEYS[roundIndex]].push({ gameId, winner: winnerName });
+                }
+              } else if (roundIndex === 4) {
+                // Final Four — FF1, FF2
+                const ffNum = (newResults.finalfour.length + 1);
+                newResults.finalfour.push({ gameId: `FF${ffNum}`, winner: winnerName });
+              } else if (roundIndex === 5) {
+                newResults.championship.push({ gameId: 'CHAMP', winner: winnerName });
+              }
+            }
+
+            // 3. Check if anything changed
+            const oldResults = JSON.stringify(bracketData.results);
+            const newResultsStr = JSON.stringify(newResults);
+
+            if (oldResults === newResultsStr) {
+              console.log('No changes detected, skipping Gist update.');
+              return;
+            }
+
+            // 4. Update Gist
+            bracketData.results = newResults;
+            await updateGist(gistId, token, bracketData);
+            console.log('Gist updated successfully!');
+            console.log('New results:', JSON.stringify(newResults, null, 2));
+          }
+
+          main().catch(err => {
+            console.error('Error:', err);
+            process.exit(1);
+          });
+          EOF
