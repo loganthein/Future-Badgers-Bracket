@@ -173,12 +173,13 @@ jobs:
 
             console.log(`  ESPN notes: "${notes}" | slug: "${slug}"`);
 
-            if (combined.includes('first round') || combined.includes('round of 64')) return 0;
-            if (combined.includes('second round') || combined.includes('round of 32')) return 1;
+            // Check specific rounds BEFORE championship (notes always contain "Championship")
+            if (combined.includes('1st round') || combined.includes('first round') || combined.includes('round of 64')) return 0;
+            if (combined.includes('2nd round') || combined.includes('second round') || combined.includes('round of 32')) return 1;
             if (combined.includes('sweet 16') || combined.includes('sweet sixteen')) return 2;
             if (combined.includes('elite eight') || combined.includes('elite 8')) return 3;
-            if (combined.includes('final four')) return 4;
-            if (combined.includes('championship') || combined.includes('national championship')) return 5;
+            if (combined.includes('final four') || combined.includes('semifinal')) return 4;
+            if (combined.includes('national championship') || combined.includes('championship game')) return 5;
 
             // Fallback: ESPN tournament round ID
             const roundId = event.competitions?.[0]?.tournament?.round?.id;
