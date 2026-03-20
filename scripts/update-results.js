@@ -128,8 +128,20 @@ async function fetchBracketData() {
   return resp.json();
 }
 
+function espnDateStr(d) {
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  return `${d.getUTCFullYear()}${mm}${dd}`;
+}
+
 async function fetchESPN() {
-  const url  = `http://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=100`;
+  // Fetch yesterday + today so games that finished late the previous day are included.
+  const today     = new Date();
+  const yesterday = new Date(today);
+  yesterday.setUTCDate(today.getUTCDate() - 1);
+  const dateRange = `${espnDateStr(yesterday)}-${espnDateStr(today)}`;
+
+  const url  = `http://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200&dates=${dateRange}`;
   const resp = await fetch(url);
   if (!resp.ok) throw new Error(`ESPN API failed: ${resp.status}`);
   return resp.json();
