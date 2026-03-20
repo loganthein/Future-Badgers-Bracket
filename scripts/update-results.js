@@ -134,17 +134,34 @@ function espnDateStr(d) {
   return `${d.getUTCFullYear()}${mm}${dd}`;
 }
 
+async function fetchESPNForDate(dateStr) {
+  const url  = `http://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=100&dates=${dateStr}`;
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`ESPN API failed for ${dateStr}: ${resp.status}`);
+  const data = await resp.json();
+  return data.events || [];
+}
+
 async function fetchESPN() {
-  // Fetch yesterday + today so games that finished late the previous day are included.
+  // Fetch yesterday + today separately — ESPN's API takes one date at a time.
   const today     = new Date();
   const yesterday = new Date(today);
   yesterday.setUTCDate(today.getUTCDate() - 1);
-  const dateRange = `${espnDateStr(yesterday)}-${espnDateStr(today)}`;
 
-  const url  = `http://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=200&dates=${dateRange}`;
-  const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`ESPN API failed: ${resp.status}`);
-  return resp.json();
+  const [todayEvents, yesterdayEvents] = await Promise.all([
+    fetchESPNForDate(espnDateStr(today)),
+    fetchESPNForDate(espnDateStr(yesterday)),
+  ]);
+
+  console.log(`ESPN: ${yesterdayEvents.length} events yesterday, ${todayEvents.length} today`);
+
+  // Deduplicate by event id in case a game spans midnight
+  const seen   = new Set();
+  const events = [];
+  for (const ev of [...yesterdayEvents, ...todayEvents]) {
+    if (!seen.has(ev.id)) { seen.add(ev.id); events.push(ev); }
+  }
+  return { events };
 }
 
 async function patchGist(data) {
