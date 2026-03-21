@@ -35,19 +35,91 @@ const ROUND_DATE_RANGES = [
   { round: 6, start: '2026-04-06', end: '2026-04-07' }, // Champ: Mon
 ];
 
-// ESPN display name → our bracket team name (add entries as needed)
+// ESPN display name → our bracket team name
+// Covers both short names (e.g. "Michigan St.") and full names (e.g. "Michigan State Spartans")
 const ESPN_NAME_MAP = {
-  'Connecticut':       'UConn',
-  'Michigan St.':      'Michigan State',
-  'North Dakota St.':  'North Dakota State',
-  "St. John's (NY)":   "St. John's",
-  'Miami':             'Miami (FL)',
-  'Miami OH':          'Miami (OH)',
-  'N.C. State':        'NC State',
-  'Prairie View':      'Prairie View A&M',
-  'Tennessee St.':     'Tennessee State',
-  'Wright St.':        'Wright State',
-  'Kennesaw St.':      'Kennesaw State',
+  // Full ESPN display names
+  'Duke Blue Devils':           'Duke',
+  'UConn Huskies':              'UConn',
+  'Connecticut Huskies':        'UConn',
+  'Michigan State Spartans':    'Michigan State',
+  'Kansas Jayhawks':            'Kansas',
+  "St. John's Red Storm":       "St. John's",
+  'Louisville Cardinals':       'Louisville',
+  'UCLA Bruins':                'UCLA',
+  'Ohio State Buckeyes':        'Ohio State',
+  'TCU Horned Frogs':           'TCU',
+  'UCF Knights':                'UCF',
+  'South Florida Bulls':        'South Florida',
+  'Northern Iowa Panthers':     'Northern Iowa',
+  'Cal Baptist Lancers':        'Cal Baptist',
+  'North Dakota State Bison':   'North Dakota State',
+  'Furman Paladins':            'Furman',
+  'Siena Saints':               'Siena',
+  'Arizona Wildcats':           'Arizona',
+  'Purdue Boilermakers':        'Purdue',
+  'Gonzaga Bulldogs':           'Gonzaga',
+  'Arkansas Razorbacks':        'Arkansas',
+  'Wisconsin Badgers':          'Wisconsin',
+  'BYU Cougars':                'BYU',
+  'Miami Hurricanes':           'Miami (FL)',
+  'Villanova Wildcats':         'Villanova',
+  'Utah State Aggies':          'Utah State',
+  'Missouri Tigers':            'Missouri',
+  'High Point Panthers':        'High Point',
+  'Hawaii Rainbow Warriors':    'Hawaii',
+  'Kennesaw State Owls':        'Kennesaw State',
+  'Queens Royals':              'Queens',
+  'LIU Sharks':                 'LIU',
+  'Florida Gators':             'Florida',
+  'Houston Cougars':            'Houston',
+  'Illinois Fighting Illini':   'Illinois',
+  'Nebraska Cornhuskers':       'Nebraska',
+  'Vanderbilt Commodores':      'Vanderbilt',
+  'North Carolina Tar Heels':   'North Carolina',
+  "Saint Mary's Gaels":         "Saint Mary's",
+  'Clemson Tigers':             'Clemson',
+  'Iowa Hawkeyes':              'Iowa',
+  'Texas A&M Aggies':           'Texas A&M',
+  'VCU Rams':                   'VCU',
+  'McNeese Cowboys':            'McNeese',
+  'Troy Trojans':               'Troy',
+  'Penn Quakers':               'Penn',
+  'Idaho Vandals':              'Idaho',
+  'Michigan Wolverines':        'Michigan',
+  'Iowa State Cyclones':        'Iowa State',
+  'Virginia Cavaliers':         'Virginia',
+  'Alabama Crimson Tide':       'Alabama',
+  'Texas Tech Red Raiders':     'Texas Tech',
+  'Tennessee Volunteers':       'Tennessee',
+  'Kentucky Wildcats':          'Kentucky',
+  'Georgia Bulldogs':           'Georgia',
+  'Saint Louis Billikens':      'Saint Louis',
+  'Santa Clara Broncos':        'Santa Clara',
+  'Akron Zips':                 'Akron',
+  'Hofstra Pride':              'Hofstra',
+  'Wright State Raiders':       'Wright State',
+  'Tennessee State Tigers':     'Tennessee State',
+  'UMBC Retrievers':            'UMBC',
+  'Howard Bison':               'Howard',
+  'SMU Mustangs':               'SMU',
+  'Miami RedHawks':             'Miami (OH)',
+  'Prairie View Panthers':      'Prairie View A&M',
+  'Lehigh Mountain Hawks':      'Lehigh',
+  'NC State Wolfpack':          'NC State',
+  'Texas Longhorns':            'Texas',
+  // Short/abbreviated names ESPN sometimes uses
+  'Connecticut':                'UConn',
+  'Michigan St.':               'Michigan State',
+  'North Dakota St.':           'North Dakota State',
+  "St. John's (NY)":            "St. John's",
+  'Miami':                      'Miami (FL)',
+  'Miami OH':                   'Miami (OH)',
+  'N.C. State':                 'NC State',
+  'Prairie View':               'Prairie View A&M',
+  'Tennessee St.':              'Tennessee State',
+  'Wright St.':                 'Wright State',
+  'Kennesaw St.':               'Kennesaw State',
 };
 
 function mapName(espnName) {
@@ -135,7 +207,7 @@ function espnDateStr(d) {
 }
 
 async function fetchESPNForDate(dateStr) {
-  const url  = `http://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=100&dates=${dateStr}`;
+  const url  = `https://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=100&dates=${dateStr}`;
   const resp = await fetch(url);
   if (!resp.ok) throw new Error(`ESPN API failed for ${dateStr}: ${resp.status}`);
   const data = await resp.json();
