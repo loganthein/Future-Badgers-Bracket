@@ -128,11 +128,46 @@ async function fetchBracketData() {
   return resp.json();
 }
 
-async function fetchESPN() {
-  const url  = `http://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=100`;
+function espnDateStr(d) {
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  return `${d.getUTCFullYear()}${mm}${dd}`;
+}
+
+async function fetchESPNForDate(dateStr) {
+  const url  = `http://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard?groups=100&limit=100&dates=${dateStr}`;
   const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`ESPN API failed: ${resp.status}`);
-  return resp.json();
+  if (!resp.ok) throw new Error(`ESPN API failed for ${dateStr}: ${resp.status}`);
+  const data = await resp.json();
+  return data.events || [];
+}
+
+async function fetchESPN() {
+  // Build the list of every calendar day from tournament start through today (UTC).
+  // This ensures we never miss games from multi-day rounds regardless of when the
+  // script runs.
+  const tourneyStart = new Date(START); // reuse the window guard constant
+  const today        = new Date();
+
+  const datesToFetch = [];
+  for (let d = new Date(tourneyStart); d <= today; d.setUTCDate(d.getUTCDate() + 1)) {
+    datesToFetch.push(espnDateStr(new Date(d)));
+  }
+
+  console.log(`Fetching ESPN for: ${datesToFetch.join(', ')}`);
+
+  const allEventArrays = await Promise.all(datesToFetch.map(fetchESPNForDate));
+
+  // Merge and deduplicate by ESPN event id
+  const seen   = new Set();
+  const events = [];
+  for (const evArr of allEventArrays) {
+    for (const ev of evArr) {
+      if (!seen.has(ev.id)) { seen.add(ev.id); events.push(ev); }
+    }
+  }
+  console.log(`Total unique events: ${events.length}`);
+  return { events };
 }
 
 async function patchGist(data) {
