@@ -143,24 +143,30 @@ async function fetchESPNForDate(dateStr) {
 }
 
 async function fetchESPN() {
-  // Fetch yesterday + today separately — ESPN's API takes one date at a time.
-  const today     = new Date();
-  const yesterday = new Date(today);
-  yesterday.setUTCDate(today.getUTCDate() - 1);
+  // Build the list of every calendar day from tournament start through today (UTC).
+  // This ensures we never miss games from multi-day rounds regardless of when the
+  // script runs.
+  const tourneyStart = new Date(START); // reuse the window guard constant
+  const today        = new Date();
 
-  const [todayEvents, yesterdayEvents] = await Promise.all([
-    fetchESPNForDate(espnDateStr(today)),
-    fetchESPNForDate(espnDateStr(yesterday)),
-  ]);
+  const datesToFetch = [];
+  for (let d = new Date(tourneyStart); d <= today; d.setUTCDate(d.getUTCDate() + 1)) {
+    datesToFetch.push(espnDateStr(new Date(d)));
+  }
 
-  console.log(`ESPN: ${yesterdayEvents.length} events yesterday, ${todayEvents.length} today`);
+  console.log(`Fetching ESPN for: ${datesToFetch.join(', ')}`);
 
-  // Deduplicate by event id in case a game spans midnight
+  const allEventArrays = await Promise.all(datesToFetch.map(fetchESPNForDate));
+
+  // Merge and deduplicate by ESPN event id
   const seen   = new Set();
   const events = [];
-  for (const ev of [...yesterdayEvents, ...todayEvents]) {
-    if (!seen.has(ev.id)) { seen.add(ev.id); events.push(ev); }
+  for (const evArr of allEventArrays) {
+    for (const ev of evArr) {
+      if (!seen.has(ev.id)) { seen.add(ev.id); events.push(ev); }
+    }
   }
+  console.log(`Total unique events: ${events.length}`);
   return { events };
 }
 
