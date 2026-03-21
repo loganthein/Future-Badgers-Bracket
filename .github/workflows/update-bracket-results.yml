@@ -1,10 +1,7 @@
 name: Update Bracket Results
 
 on:
-  schedule:
-    - cron: '0,20,40 17-23 * * *'
-    - cron: '0,20,40 0-5 * * *'
-  workflow_dispatch:
+  workflow_dispatch: # disabled scheduled runs — superseded by update-results.yml
 
 jobs:
   update-results:
